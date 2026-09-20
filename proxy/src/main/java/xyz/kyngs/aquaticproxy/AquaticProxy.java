@@ -3,11 +3,15 @@ package xyz.kyngs.aquaticproxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.kyngs.aquaticproxy.api.Proxy;
+import xyz.kyngs.aquaticproxy.api.backend.BackendModule;
 import xyz.kyngs.aquaticproxy.api.event.EventModule;
+import xyz.kyngs.aquaticproxy.api.player.PlayerModule;
 import xyz.kyngs.aquaticproxy.api.status.ServerStatusModule;
 import xyz.kyngs.aquaticproxy.api.network.NetworkModule;
+import xyz.kyngs.aquaticproxy.backend.AquaticBackendModule;
 import xyz.kyngs.aquaticproxy.event.AquaticEventModule;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
+import xyz.kyngs.aquaticproxy.player.AquaticPlayerModule;
 import xyz.kyngs.aquaticproxy.status.AquaticServerStatusModule;
 import xyz.kyngs.aquaticproxy.network.AquaticNetworkModule;
 import xyz.kyngs.aquaticproxy.plugin.AquaticPluginManager;
@@ -45,7 +49,7 @@ public class AquaticProxy implements Proxy {
         this.state.set(State.RUNNING);
 
         try {
-            moduleManager.getModule(NetworkModule.KEY).bind("localhost", 25565);
+            moduleManager.getNetworkModule().bind("localhost", 25565);
         } catch (BindException e) {
             LOGGER.error("Failed to bind network module to localhost:25565. Is another server running on this port?", e);
             stop();
@@ -120,5 +124,7 @@ public class AquaticProxy implements Proxy {
         moduleManager.registerProvider(this, NetworkModule.KEY, 0, () -> new AquaticNetworkModule(this, moduleManager));
         moduleManager.registerProvider(this, EventModule.KEY, 0, () -> new AquaticEventModule(this));
         moduleManager.registerProvider(this, ServerStatusModule.KEY, 0, AquaticServerStatusModule::new);
+        moduleManager.registerProvider(this, PlayerModule.KEY, 0, AquaticPlayerModule::new);
+        moduleManager.registerProvider(this, BackendModule.KEY, 0, AquaticBackendModule::new);
     }
 }

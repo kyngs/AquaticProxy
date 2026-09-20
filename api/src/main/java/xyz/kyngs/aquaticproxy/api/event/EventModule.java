@@ -17,10 +17,10 @@ public interface EventModule extends Module {
 
     <E extends Event> void subscribe(ResourceOwner owner, EventKey<E> event, Consumer<E> listener, EventPriority order);
 
-    <E extends Event> void fire(EventKey<E> key, E event);
+    <E extends Event> void fire(E event);
 
-    default <E extends Event> void fireAndForget(EventKey<E> key, E event) {
-        Thread.startVirtualThread(() -> fire(key, event));
+    default <E extends Event> void fireAndForget(E event) {
+        Thread.startVirtualThread(() -> fire(event));
     }
 
 }

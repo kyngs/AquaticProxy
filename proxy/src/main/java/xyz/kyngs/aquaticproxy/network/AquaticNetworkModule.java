@@ -3,14 +3,17 @@ package xyz.kyngs.aquaticproxy.network;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.kyngs.aquaticproxy.api.Proxy;
+import xyz.kyngs.aquaticproxy.api.backend.BackendServer;
+import xyz.kyngs.aquaticproxy.api.network.BackendConnection;
 import xyz.kyngs.aquaticproxy.api.network.ClientConnection;
 import xyz.kyngs.aquaticproxy.api.network.NetworkFabric;
 import xyz.kyngs.aquaticproxy.api.network.NetworkModule;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.BuiltinPackets;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 import xyz.kyngs.aquaticproxy.network.protocol.AquaticPacketRegistry;
-import xyz.kyngs.aquaticproxy.network.server.socket.SocketNetworkFabric;
+import xyz.kyngs.aquaticproxy.network.fabric.SocketNetworkFabric;
 
+import java.io.IOException;
 import java.net.BindException;
 
 public class AquaticNetworkModule implements NetworkModule {
@@ -34,6 +37,20 @@ public class AquaticNetworkModule implements NetworkModule {
     @Override
     public ClientConnection registerClientConnection(NetworkFabric.ClientAdapter<?> adapter) {
         return new AquaticClientConnection(adapter, this, moduleManager);
+    }
+
+    @Override
+    public BackendConnection openBackendConnection(BackendServer server, ClientConnection pairedClient) {
+        try {
+            return network.openBackendConnection(server, pairedClient);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public BackendConnection registerBackendConnection(NetworkFabric.BackendAdapter<?> adapter, ClientConnection pairedClient) {
+        return new AquaticBackendConnection(adapter, pairedClient, this, moduleManager);
     }
 
     @Override

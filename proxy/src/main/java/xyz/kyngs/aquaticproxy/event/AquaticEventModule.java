@@ -50,8 +50,8 @@ public class AquaticEventModule implements EventModule {
     }
 
     @Override
-    public <E extends Event> void fire(EventKey<E> key, E event) {
-        var list = subscribers.get(key);
+    public <E extends Event> void fire(E event) {
+        var list = subscribers.get(event.getKey());
         if (list == null) {
             return;
         }
@@ -59,7 +59,7 @@ public class AquaticEventModule implements EventModule {
             try {
                 ((Consumer<E>) subscriber.listener()).accept(event);
             } catch (Exception e) {
-                LOGGER.error("Error while firing event {} to subscriber owned by {}: {}", key, subscriber.owner(), e.getMessage(), e);
+                LOGGER.error("Error while firing event {} to subscriber owned by {}: {}", event.getKey(), subscriber.owner(), e.getMessage(), e);
             }
         }
     }

@@ -2,6 +2,7 @@ package xyz.kyngs.aquaticproxy.api.network.protocol;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.json.JSONOptions;
 import net.kyori.option.OptionSchema;
@@ -303,5 +304,13 @@ public class ProtocolUtil {
         }
 
         return PRE_1_16_SERIALIZER;
+    }
+
+    public static Component readComponent(ByteBuf buf, ProtocolVersion version) {
+        return getJsonChatSerializer(version).deserialize(readString(buf));
+    }
+
+    public static void writeComponent(ByteBuf buf, Component component, ProtocolVersion version) {
+        writeString(buf, getJsonChatSerializer(version).serialize(component));
     }
 }

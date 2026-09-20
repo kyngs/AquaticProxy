@@ -9,6 +9,7 @@ import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.LoginStartPacket
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.LoginSuccessPacket;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
 import xyz.kyngs.aquaticproxy.api.util.GameProfile;
+import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 import xyz.kyngs.aquaticproxy.network.AquaticClientConnection;
 
 import java.util.List;
@@ -18,10 +19,15 @@ public class LoginSessionHandler implements ClientSessionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginSessionHandler.class);
 
     private final AquaticClientConnection connection;
+    private final AquaticModuleManager moduleManager;
+    private final UUID sessionId;
+    private GameProfile profile;
 
-    public LoginSessionHandler(AquaticClientConnection connection) {
+    public LoginSessionHandler(AquaticClientConnection connection, AquaticModuleManager moduleManager) {
         super();
         this.connection = connection;
+        this.moduleManager = moduleManager;
+        this.sessionId = UUID.randomUUID();
     }
 
     @Override
@@ -41,13 +47,25 @@ public class LoginSessionHandler implements ClientSessionHandler {
 
     @Override
     public PacketHandler.Result handle(LoginStartPacket packet) {
-        connection.writePacket(new LoginSuccessPacket(new GameProfile(UUID.randomUUID(), "kyngs", List.of()), UUID.randomUUID()));
+        profile = new GameProfile(packet.getClaimedUUID(), packet.getUsername(), List.of());
+        connection.writePacket(new LoginSuccessPacket(profile, sessionId));
         return PacketHandler.Result.CANCELLED;
     }
 
     @Override
     public PacketHandler.Result handle(LoginAcknowledgedPacket packet) {
-        connection.switchProtocolState(new ConfigurationSessionHandler(connection));
+        if (profile == null) {
+            LOGGER.warn("Disconnecting client {} because profile is not set", connection);
+            connection.disconnect();
+            return PacketHandler.Result.CANCELLED;
+        }
+        var playerModule = moduleManager.getPlayerModule();
+        if (playerModule == null) {
+            LOGGER.warn("Disconnecting client {} because PlayerModule is not loaded", connection);
+            connection.disconnect();
+            return PacketHandler.Result.CANCELLED;
+        }
+        connection.switchProtocolState(new ConfigurationSessionHandler(connection, profile, sessionId, moduleManager, playerModule));
         return PacketHandler.Result.CANCELLED;
     }
 }

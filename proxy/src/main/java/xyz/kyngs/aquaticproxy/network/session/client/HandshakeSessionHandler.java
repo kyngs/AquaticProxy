@@ -9,15 +9,16 @@ import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolVersion;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.handshake.HandshakePacket;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
 import xyz.kyngs.aquaticproxy.api.status.ServerStatusModule;
+import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 import xyz.kyngs.aquaticproxy.network.AquaticClientConnection;
 
 public class HandshakeSessionHandler implements ClientSessionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(HandshakeSessionHandler.class);
 
     private final AquaticClientConnection connection;
-    private final ModuleManager moduleManager;
+    private final AquaticModuleManager moduleManager;
 
-    public HandshakeSessionHandler(AquaticClientConnection connection, ModuleManager moduleManager) {
+    public HandshakeSessionHandler(AquaticClientConnection connection, AquaticModuleManager moduleManager) {
         super();
         this.connection = connection;
         this.moduleManager = moduleManager;
@@ -51,7 +52,7 @@ public class HandshakeSessionHandler implements ClientSessionHandler {
     }
 
     public void switchToStatus() {
-        var statusModule = moduleManager.getModule(ServerStatusModule.KEY);
+        var statusModule = moduleManager.getServerStatusModule();
         if (statusModule == null) {
             connection.disconnect();
             return;
@@ -60,6 +61,6 @@ public class HandshakeSessionHandler implements ClientSessionHandler {
     }
 
     public void switchToLogin() {
-        connection.switchProtocolState(new LoginSessionHandler(connection));
+        connection.switchProtocolState(new LoginSessionHandler(connection, moduleManager));
     }
 }

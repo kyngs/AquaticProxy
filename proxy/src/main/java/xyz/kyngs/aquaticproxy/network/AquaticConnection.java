@@ -3,6 +3,7 @@ package xyz.kyngs.aquaticproxy.network;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import net.kyori.adventure.text.Component;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.kyngs.aquaticproxy.api.network.Connection;
@@ -14,27 +15,31 @@ import xyz.kyngs.aquaticproxy.api.network.session.SessionHandler;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 
 import java.io.IOException;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public abstract class AquaticConnection<S extends SessionHandler> implements Connection {
+public abstract class AquaticConnection<S extends SessionHandler, PC extends Connection> implements Connection {
     private static final Logger LOGGER = LoggerFactory.getLogger(AquaticConnection.class);
-    protected final NetworkFabric.ClientAdapter<?> adapter;
+    protected final NetworkFabric.Adapter<?> adapter;
     protected final AquaticNetworkModule networkModule;
     protected final AquaticModuleManager moduleManager;
-    protected final Lock protocolLock;
+    protected final ReentrantReadWriteLock connectionLock;
     protected ProtocolVersion protocolVersion;
     protected volatile S sessionHandler;
+    protected volatile PC pairedConnection;
 
-    protected AquaticConnection(NetworkFabric.ClientAdapter<?> adapter, AquaticNetworkModule networkModule, AquaticModuleManager moduleManager) {
+    protected AquaticConnection(NetworkFabric.Adapter<?> adapter, AquaticNetworkModule networkModule, AquaticModuleManager moduleManager) {
         this.adapter = adapter;
         this.networkModule = networkModule;
         this.moduleManager = moduleManager;
         this.sessionHandler = createInitialSessionHandler(); // Cannot pass in the constructor because it would not allow the subclass to pass itself to the session handler, which is needed for the session handler to be able to call back into the connection.
         this.protocolVersion = ProtocolVersion.UNKNOWN;
-        this.protocolLock = new ReentrantLock();
+        this.connectionLock = new ReentrantReadWriteLock();
+    }
 
-        sessionHandler.activate();
+    public NetworkFabric.Adapter<?> getAdapter() {
+        return adapter;
     }
 
     @Override
@@ -48,8 +53,13 @@ public abstract class AquaticConnection<S extends SessionHandler> implements Con
     }
 
     @Override
-    public Lock getProtocolLock() {
-        return protocolLock;
+    public boolean isConnected() {
+        return adapter.isConnected();
+    }
+
+    @Override
+    public ReadWriteLock getConnectionLock() {
+        return connectionLock;
     }
 
     abstract protected S createInitialSessionHandler();
@@ -59,7 +69,7 @@ public abstract class AquaticConnection<S extends SessionHandler> implements Con
     }
 
     public void switchProtocolState(S newHandler) {
-        doLocked(() -> {
+        doWriteLocked(() -> {
             sessionHandler.deactivate();
             sessionHandler = newHandler;
             newHandler.activate();
@@ -92,8 +102,24 @@ public abstract class AquaticConnection<S extends SessionHandler> implements Con
     public void disconnect(Component reason) {
         try {
             adapter.close();
+
+            if (pairedConnection != null && pairedConnection.isConnected()) {
+                pairedConnection.disconnect(reason);
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public @Nullable PC getPairedConnection() {
+        return pairedConnection;
+    }
+
+    public void setPairedConnection(PC pairedConnection) {
+        if (!connectionLock.writeLock().isHeldByCurrentThread()) {
+            throw new IllegalStateException("Cannot set paired connection without holding the connection's write lock");
+        }
+        this.pairedConnection = pairedConnection;
     }
 }

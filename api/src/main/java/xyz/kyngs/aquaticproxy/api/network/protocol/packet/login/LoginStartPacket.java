@@ -13,6 +13,14 @@ public class LoginStartPacket implements Packet {
     private String username;
     private UUID claimedUUID;
 
+    public LoginStartPacket() {
+    }
+
+    public LoginStartPacket(UUID claimedUUID, String username) {
+        this.claimedUUID = claimedUUID;
+        this.username = username;
+    }
+
     @Override
     public void decode(ByteBuf buf, ProtocolVersion version) {
         username = readString(buf, 16);
@@ -23,5 +31,21 @@ public class LoginStartPacket implements Packet {
     public void encode(ByteBuf buf, ProtocolVersion version) {
         writeString(buf, username);
         writeUuid(buf, claimedUUID);
+    }
+
+    public UUID getClaimedUUID() {
+        return claimedUUID;
+    }
+
+    public void setClaimedUUID(UUID claimedUUID) {
+        this.claimedUUID = claimedUUID;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }
