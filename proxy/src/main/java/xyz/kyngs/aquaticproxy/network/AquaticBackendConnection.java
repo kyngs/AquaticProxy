@@ -9,13 +9,14 @@ import xyz.kyngs.aquaticproxy.api.network.NetworkFabric;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketDirection;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolUtil;
 import xyz.kyngs.aquaticproxy.api.network.session.BackendSessionHandler;
+import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 
 public class AquaticBackendConnection extends AquaticConnection<BackendSessionHandler> implements BackendConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AquaticBackendConnection.class);
 
-    public AquaticBackendConnection(NetworkFabric.ClientAdapter<?> adapter, AquaticNetworkManager networkManager) {
-        super(adapter, networkManager);
+    public AquaticBackendConnection(NetworkFabric.ClientAdapter<?> adapter, AquaticNetworkModule networkManager, AquaticModuleManager moduleManager) {
+        super(adapter, networkManager, moduleManager);
     }
 
     @Override
@@ -27,7 +28,7 @@ public class AquaticBackendConnection extends AquaticConnection<BackendSessionHa
     public void handleFrame(ByteBuf data) {
         var packetId = ProtocolUtil.readVarInt(data);
 
-        var handlers = networkManager.getPacketHandlerRegistry().getPublishedClientboundHandlers(sessionHandler.getProtocolState(), protocolVersion.version(), packetId);
+        var handlers = networkModule.getPacketHandlerRegistry().getPublishedClientboundHandlers(sessionHandler.getProtocolState(), protocolVersion.version(), packetId);
 
         if (handlers == null || handlers.length == 0) {
             // No handlers registered for this packet, ignore it

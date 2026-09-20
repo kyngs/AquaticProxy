@@ -1,6 +1,7 @@
 package xyz.kyngs.aquaticproxy.network.protocol;
 
 import xyz.kyngs.aquaticproxy.api.ResourceOwner;
+import xyz.kyngs.aquaticproxy.api.event.EventPriority;
 import xyz.kyngs.aquaticproxy.api.network.Connection;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketDirection;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
@@ -39,7 +40,7 @@ public class AquaticPacketRegistry implements PacketRegistry<AquaticBackendConne
     }
 
     @Override
-    public <P extends Packet> void registerClientboundHandler(ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, AquaticBackendConnection> handler, int priority) {
+    public <P extends Packet> void registerClientboundHandler(ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, AquaticBackendConnection> handler, EventPriority priority) {
         if (packet.packetDirection() != PacketDirection.CLIENTBOUND) {
             throw new IllegalArgumentException("Cannot register a clientbound handler for a packet that is not clientbound");
         }
@@ -47,7 +48,7 @@ public class AquaticPacketRegistry implements PacketRegistry<AquaticBackendConne
     }
 
     @Override
-    public <P extends Packet> void registerServerboundHandler(ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, AquaticClientConnection> handler, int priority) {
+    public <P extends Packet> void registerServerboundHandler(ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, AquaticClientConnection> handler, EventPriority priority) {
         if (packet.packetDirection() != PacketDirection.SERVERBOUND) {
             throw new IllegalArgumentException("Cannot register a serverbound handler for a packet that is not serverbound");
         }
@@ -55,7 +56,7 @@ public class AquaticPacketRegistry implements PacketRegistry<AquaticBackendConne
     }
 
     private <P extends Packet, C extends Connection> void registerHandler(Map<ProtocolState, Map<Integer, Map<Integer, Collection<RegisteredHandler<?, C>>>>> registry,
-                                                                          ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, C> handler, int priority) {
+                                                                          ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, C> handler, EventPriority priority) {
         var packetRegistry = registry.computeIfAbsent(packet.state(), _ -> new HashMap<>());
 
         packet.protocolPacketIdMap().forEach((protocolVersion, packetId) -> {

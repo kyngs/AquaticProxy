@@ -2,21 +2,25 @@ package xyz.kyngs.aquaticproxy.network.session.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.kyngs.aquaticproxy.api.module.ModuleManager;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolVersion;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.handshake.HandshakePacket;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
+import xyz.kyngs.aquaticproxy.api.status.ServerStatusModule;
 import xyz.kyngs.aquaticproxy.network.AquaticClientConnection;
 
 public class HandshakeSessionHandler implements ClientSessionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(HandshakeSessionHandler.class);
 
     private final AquaticClientConnection connection;
+    private final ModuleManager moduleManager;
 
-    public HandshakeSessionHandler(AquaticClientConnection connection) {
+    public HandshakeSessionHandler(AquaticClientConnection connection, ModuleManager moduleManager) {
         super();
         this.connection = connection;
+        this.moduleManager = moduleManager;
     }
 
     @Override
@@ -47,7 +51,12 @@ public class HandshakeSessionHandler implements ClientSessionHandler {
     }
 
     public void switchToStatus() {
-        connection.switchProtocolState(new StatusSessionHandler());
+        var statusModule = moduleManager.getModule(ServerStatusModule.KEY);
+        if (statusModule == null) {
+            connection.disconnect();
+            return;
+        }
+        connection.switchProtocolState(new StatusSessionHandler(connection, statusModule));
     }
 
     public void switchToLogin() {

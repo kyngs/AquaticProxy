@@ -4,6 +4,8 @@ slf4j = "2.0.17"
 logback = "1.5.18"
 fastutil = "8.5.6"
 netty = "4.2.18.Final"
+adventure = "5.2.0"
+gson = "2.14.0"
 
 [libraries]
 
@@ -12,3 +14,6 @@ logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback"
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil" }
 netty-buffer = { module = "io.netty:netty-buffer", version.ref = "netty" }
+adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure" }
+adventure-text-serializer-gson = { module = "net.kyori:adventure-text-serializer-gson", version.ref = "adventure" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }

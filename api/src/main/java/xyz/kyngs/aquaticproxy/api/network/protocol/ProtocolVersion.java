@@ -60,8 +60,8 @@ public record ProtocolVersion(int version, String... friendlyNames) {
 
     public static final ProtocolVersion LATEST = MINECRAFT_26_2;
 
-    public boolean isNewerThan(ProtocolVersion other) {
-        return this.version > other.version;
+    public boolean isAtLeast(ProtocolVersion other) {
+        return this.version >= other.version;
     }
 
     public String getNewestFriendlyName() {

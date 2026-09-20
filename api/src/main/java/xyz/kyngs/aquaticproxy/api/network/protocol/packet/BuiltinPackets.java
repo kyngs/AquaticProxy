@@ -30,7 +30,7 @@ public class BuiltinPackets {
                 .forId(MINECRAFT_1_7_2, LATEST, 0x00)
                 .register();
 
-        registry.buildPacket(owner, StatusResponsePacket::new)
+        registry.buildWriteOnlyPacket(owner, StatusResponsePacket.class)
                 .forDirection(PacketDirection.CLIENTBOUND)
                 .forState(ProtocolState.STATUS)
                 .forId(MINECRAFT_1_7_2, LATEST, 0x00)

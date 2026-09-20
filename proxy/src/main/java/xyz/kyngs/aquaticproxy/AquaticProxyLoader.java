@@ -2,7 +2,6 @@ package xyz.kyngs.aquaticproxy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import xyz.kyngs.aquaticproxy.network.AquaticNetworkManager;
 
 import java.io.IOException;
 

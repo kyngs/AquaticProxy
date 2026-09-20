@@ -9,25 +9,26 @@ import xyz.kyngs.aquaticproxy.api.network.NetworkFabric;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketDirection;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolUtil;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
+import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 import xyz.kyngs.aquaticproxy.network.session.client.HandshakeSessionHandler;
 
 public class AquaticClientConnection extends AquaticConnection<ClientSessionHandler> implements ClientConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(AquaticClientConnection.class);
 
-    public AquaticClientConnection(NetworkFabric.ClientAdapter<?> adapter, AquaticNetworkManager networkManager) {
-        super(adapter, networkManager);
+    public AquaticClientConnection(NetworkFabric.ClientAdapter<?> adapter, AquaticNetworkModule networkManager, AquaticModuleManager moduleManager) {
+        super(adapter, networkManager, moduleManager);
     }
 
     @Override
     protected ClientSessionHandler createInitialSessionHandler() {
-        return new HandshakeSessionHandler(this);
+        return new HandshakeSessionHandler(this, moduleManager);
     }
 
     @Override
     public void handleFrame(ByteBuf data) {
         var packetId = ProtocolUtil.readVarInt(data);
 
-        var handlers = networkManager.getPacketHandlerRegistry().getPublishedServerboundHandlers(sessionHandler.getProtocolState(), protocolVersion.version(), packetId);
+        var handlers = networkModule.getPacketHandlerRegistry().getPublishedServerboundHandlers(sessionHandler.getProtocolState(), protocolVersion.version(), packetId);
 
         if (handlers == null || handlers.length == 0) {
             // No handlers registered for this packet, ignore it

@@ -8,6 +8,8 @@ public interface NetworkFabric {
 
     void bind(String bindAddress, int port) throws BindException;
 
+    void close();
+
     interface ClientAdapter<T> {
         void writeFrame(byte[] data) throws IOException;
 

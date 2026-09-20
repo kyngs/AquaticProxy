@@ -1,9 +1,11 @@
 package xyz.kyngs.aquaticproxy.api.network;
 
 import io.netty.buffer.ByteBuf;
+import net.kyori.adventure.text.Component;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolVersion;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.Packet;
 
+import java.awt.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 
@@ -15,7 +17,15 @@ public interface Connection {
 
     void writePacket(Packet packet);
 
+    ProtocolVersion getProtocolVersion();
+
     void setProtocolVersion(ProtocolVersion version);
+
+    void disconnect(Component reason);
+
+    default void disconnect() {
+        disconnect(Component.empty());
+    }
 
     Lock getProtocolLock();
 

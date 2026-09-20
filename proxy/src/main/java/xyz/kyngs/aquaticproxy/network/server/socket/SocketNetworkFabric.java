@@ -5,7 +5,7 @@ import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.kyngs.aquaticproxy.api.network.NetworkFabric;
-import xyz.kyngs.aquaticproxy.api.network.NetworkManager;
+import xyz.kyngs.aquaticproxy.api.network.NetworkModule;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -22,10 +22,10 @@ public class SocketNetworkFabric implements NetworkFabric {
     private final Thread socketThread;
     private final AtomicBoolean started = new AtomicBoolean(false);
     private final AtomicBoolean running = new AtomicBoolean(false);
-    private final NetworkManager networkManager;
+    private final NetworkModule networkModule;
 
-    public SocketNetworkFabric(NetworkManager networkManager) {
-        this.networkManager = networkManager;
+    public SocketNetworkFabric(NetworkModule networkModule) {
+        this.networkModule = networkModule;
         try {
             socket = new ServerSocket();
         } catch (IOException e) {
@@ -49,11 +49,11 @@ public class SocketNetworkFabric implements NetworkFabric {
     }
 
     private void initializeClient(Socket client) {
-        var connection = networkManager.registerClientConnection(new SocketClientAdapter(client));
+        var connection = networkModule.registerClientConnection(new SocketClientAdapter(client));
         while (!client.isClosed()) {
             try {
                 var packet = readPacket(client.getInputStream());
-                LOGGER.info("received packet from {}: {}", client.getRemoteSocketAddress(), packet);
+                LOGGER.info("Received packet from {}: {}", client.getRemoteSocketAddress(), packet);
                 connection.handleFrame(packet);
             } catch (EOFException e) {
                 try {
@@ -91,6 +91,27 @@ public class SocketNetworkFabric implements NetworkFabric {
         running.set(true);
 
         socketThread.start();
+    }
+
+    @Override
+    public void close() {
+        if (!running.compareAndSet(true, false)) {
+            throw new IllegalStateException("Server is not running");
+        }
+
+        socketThread.interrupt();
+        try {
+            socketThread.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.error("Error waiting for server thread to finish", e);
+        }
+
+        try {
+            socket.close();
+        } catch (IOException e) {
+            LOGGER.error("Error closing server socket", e);
+        }
     }
 
     public class SocketClientAdapter implements NetworkFabric.ClientAdapter<Socket> {

@@ -1,6 +1,7 @@
 package xyz.kyngs.aquaticproxy.api.network.protocol;
 
 import xyz.kyngs.aquaticproxy.api.ResourceOwner;
+import xyz.kyngs.aquaticproxy.api.event.EventPriority;
 import xyz.kyngs.aquaticproxy.api.network.BackendConnection;
 import xyz.kyngs.aquaticproxy.api.network.ClientConnection;
 import xyz.kyngs.aquaticproxy.api.network.Connection;
@@ -15,32 +16,32 @@ public interface PacketRegistry<BC extends BackendConnection, CC extends ClientC
 
     <P extends Packet> PacketBuilder<P> buildWriteOnlyPacket(ResourceOwner owner, Class<P> clazz);
 
-    <P extends Packet> void registerClientboundHandler(ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, BC> handler, int priority);
+    <P extends Packet> void registerClientboundHandler(ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, BC> handler, EventPriority priority);
 
-    default <P extends Packet> void registerClientboundHandler(ResourceOwner owner, Class<P> packet, PacketHandler<P, BC> handler, int priority) {
+    default <P extends Packet> void registerClientboundHandler(ResourceOwner owner, Class<P> packet, PacketHandler<P, BC> handler, EventPriority priority) {
         registerClientboundHandler(owner, getRegisteredPacket(packet), handler, priority);
     }
 
     default <P extends Packet> void registerClientboundHandler(ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, BC> handler) {
-        registerClientboundHandler(owner, packet, handler, 0);
+        registerClientboundHandler(owner, packet, handler, EventPriority.NORMAL);
     }
 
     default <P extends Packet> void registerClientboundHandler(ResourceOwner owner, Class<P> packet, PacketHandler<P, BC> handler) {
-        registerClientboundHandler(owner, getRegisteredPacket(packet), handler, 0);
+        registerClientboundHandler(owner, getRegisteredPacket(packet), handler, EventPriority.NORMAL);
     }
 
-    <P extends Packet> void registerServerboundHandler(ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, CC> handler, int priority);
+    <P extends Packet> void registerServerboundHandler(ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, CC> handler, EventPriority priority);
 
-    default <P extends Packet> void registerServerboundHandler(ResourceOwner owner, Class<P> packet, PacketHandler<P, CC> handler, int priority) {
+    default <P extends Packet> void registerServerboundHandler(ResourceOwner owner, Class<P> packet, PacketHandler<P, CC> handler, EventPriority priority) {
         registerServerboundHandler(owner, getRegisteredPacket(packet), handler, priority);
     }
 
     default <P extends Packet> void registerServerboundHandler(ResourceOwner owner, RegisteredPacket<P> packet, PacketHandler<P, CC> handler) {
-        registerServerboundHandler(owner, packet, handler, 0);
+        registerServerboundHandler(owner, packet, handler, EventPriority.NORMAL);
     }
 
     default <P extends Packet> void registerServerboundHandler(ResourceOwner owner, Class<P> packet, PacketHandler<P, CC> handler) {
-        registerServerboundHandler(owner, getRegisteredPacket(packet), handler, 0);
+        registerServerboundHandler(owner, getRegisteredPacket(packet), handler, EventPriority.NORMAL);
     }
 
     <P extends Packet> RegisteredPacket<P> getRegisteredPacket(Class<P> packetClass);
@@ -79,10 +80,10 @@ public interface PacketRegistry<BC extends BackendConnection, CC extends ClientC
         RegisteredPacket<P> register();
     }
 
-    record RegisteredHandler<P extends Packet, C extends Connection>(ResourceOwner owner, PacketHandler<P, C> handler, RegisteredPacket<P> packet, int priority) implements Comparable<RegisteredHandler<?, ?>> {
+    record RegisteredHandler<P extends Packet, C extends Connection>(ResourceOwner owner, PacketHandler<P, C> handler, RegisteredPacket<P> packet, EventPriority priority) implements Comparable<RegisteredHandler<?, ?>> {
         @Override
         public int compareTo(RegisteredHandler<?, ?> o) {
-            return Integer.compare(o.priority, this.priority);
+            return Integer.compare(this.priority.priority(), o.priority.priority());
         }
     }
 
