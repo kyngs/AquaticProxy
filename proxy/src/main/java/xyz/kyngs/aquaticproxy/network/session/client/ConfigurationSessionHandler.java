@@ -5,7 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.kyngs.aquaticproxy.api.event.EventModule;
 import xyz.kyngs.aquaticproxy.api.event.backend.ChooseInitialServerEvent;
+import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.AcknowledgeFinishConfigurationPacket;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.ConfigurationDisconnectPacket;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.FinishConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
 import xyz.kyngs.aquaticproxy.api.player.Player;
 import xyz.kyngs.aquaticproxy.api.player.PlayerModule;
@@ -72,4 +76,20 @@ public class ConfigurationSessionHandler implements ClientSessionHandler {
 
     }
 
+    @Override
+    public PacketHandler.Result handle(AcknowledgeFinishConfigurationPacket packet) {
+        switchToPlay();
+        return PacketHandler.Result.CANCELLED;
+    }
+
+    public void switchToPlay() {
+        var pc = connection.getPairedConnection();
+        if (pc != null) pc.writePacket(new AcknowledgeFinishConfigurationPacket());
+        connection.switchProtocolState(new PlaySessionHandler(connection, player, moduleManager));
+    }
+
+    @Override
+    public void sendDisconnectReason(Component reason) {
+        connection.writePacket(new ConfigurationDisconnectPacket(reason));
+    }
 }

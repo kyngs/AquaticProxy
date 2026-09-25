@@ -35,7 +35,7 @@ public class SocketNetworkFabric implements NetworkFabric {
             throw new RuntimeException(e);
         }
 
-        socketThread = new Thread(this::acceptConnections, "SocketServer thread");
+        socketThread = new Thread(this::acceptConnections, "Server thread");
     }
 
     private static ByteBuf readPacket(InputStream in) throws IOException {
@@ -92,6 +92,9 @@ public class SocketNetworkFabric implements NetworkFabric {
                 Thread.ofVirtual()
                         .name(client.getInetAddress().getHostAddress() + ":" + client.getPort() + " client thread")
                         .start(() -> initializeClient(client));
+            } catch (SocketException e) {
+                if (!running.get()) break;
+                LOGGER.error("Socket exception while accepting connection", e);
             } catch (IOException e) {
                 LOGGER.error("Error accepting connection", e);
             }
@@ -140,18 +143,18 @@ public class SocketNetworkFabric implements NetworkFabric {
             throw new IllegalStateException("Server is not running");
         }
 
+        try {
+            socket.close();
+        } catch (IOException e) {
+            LOGGER.error("Error closing server socket", e);
+        }
+
         socketThread.interrupt();
         try {
             socketThread.join();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.error("Error waiting for server thread to finish", e);
-        }
-
-        try {
-            socket.close();
-        } catch (IOException e) {
-            LOGGER.error("Error closing server socket", e);
         }
     }
 
@@ -204,9 +207,9 @@ public class SocketNetworkFabric implements NetworkFabric {
         }
 
         @Override
-        public void writeFrame(byte[] data) throws IOException {
+        public void writeFrame(ByteBuf buf) throws IOException {
             var out = backend.getOutputStream();
-            var length = data.length;
+            var length = buf.readableBytes();
 
             if (length > MAX_PACKET_SIZE) {
                 throw new IOException("Packet length is invalid: " + length);
@@ -223,7 +226,7 @@ public class SocketNetworkFabric implements NetworkFabric {
                 }
             }
 
-            out.write(data);
+            buf.readBytes(out, buf.readableBytes());
             out.flush();
         }
 
@@ -257,9 +260,9 @@ public class SocketNetworkFabric implements NetworkFabric {
         }
 
         @Override
-        public void writeFrame(byte[] data) throws IOException {
+        public void writeFrame(ByteBuf buf) throws IOException {
             var out = client.getOutputStream();
-            var length = data.length;
+            var length = buf.readableBytes();
 
             if (length > MAX_PACKET_SIZE) {
                 throw new IOException("Packet length is invalid: " + length);
@@ -276,7 +279,7 @@ public class SocketNetworkFabric implements NetworkFabric {
                 }
             }
 
-            out.write(data);
+            buf.readBytes(out, buf.readableBytes());
             out.flush();
         }
 

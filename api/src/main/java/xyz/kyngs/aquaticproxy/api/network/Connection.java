@@ -14,7 +14,7 @@ public interface Connection {
 
     void handleFrame(ByteBuf data);
 
-    void writeFrame(byte[] data);
+    void writeFrame(ByteBuf data);
 
     void writePacket(Packet packet);
 
@@ -22,11 +22,7 @@ public interface Connection {
 
     void setProtocolVersion(ProtocolVersion version);
 
-    void disconnect(Component reason);
-
-    default void disconnect() {
-        disconnect(Component.empty());
-    }
+    void disconnect();
 
     boolean isConnected();
 

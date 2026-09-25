@@ -4,7 +4,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.AcknowledgeFinishConfigurationPacket;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.FinishConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.session.BackendSessionHandler;
 import xyz.kyngs.aquaticproxy.api.player.Player;
 import xyz.kyngs.aquaticproxy.network.AquaticBackendConnection;
@@ -29,12 +32,26 @@ public class ConfigurationSessionHandler implements BackendSessionHandler {
     public void activate() {
         for (ByteBuf frame : connection.getPairedConnection().getQueuedConfigurationFrames()) {
             LOGGER.info("Sending queued configuration frame to backend connection for player {}", player);
-            connection.writeFrame(ByteBufUtil.getBytes(frame));
+            connection.writeFrame(frame);
+            frame.release();
         }
+        connection.getPairedConnection().getQueuedConfigurationFrames().clear();
     }
 
     @Override
     public void deactivate() {
 
+    }
+
+    @Override
+    public PacketHandler.Result handle(FinishConfigurationPacket packet) {
+        switchToPlay();
+        return PacketHandler.Result.CANCELLED;
+    }
+
+    public void switchToPlay() {
+        var pc = connection.getPairedConnection();
+        if (pc != null) pc.writePacket(new FinishConfigurationPacket());
+        connection.switchProtocolState(new PlaySessionHandler(connection, player));
     }
 }

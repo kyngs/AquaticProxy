@@ -115,7 +115,7 @@ public class ProtocolUtil {
                                                        + ByteBufUtil.utf8MaxBytes(DEFAULT_MAX_STRING_SIZE);
 
     private static PacketDecoderException badVarint() {
-        return BAD_VARINT_CACHED;
+        return new PacketDecoderException("Bad VarInt decoded"); //BAD_VARINT_CACHED;
     }
 
     /**

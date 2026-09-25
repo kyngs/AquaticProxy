@@ -1,5 +1,6 @@
 package xyz.kyngs.aquaticproxy.network;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import net.kyori.adventure.text.Component;
@@ -78,7 +79,7 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
     }
 
     @Override
-    public void writeFrame(byte[] data) {
+    public void writeFrame(ByteBuf data) {
         try {
             adapter.writeFrame(data);
         } catch (IOException e) {
@@ -95,16 +96,17 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
         var data = Unpooled.buffer();
         ProtocolUtil.writeVarInt(data, registration.protocolPacketIdMap().get(protocolVersion.version()));
         packet.encode(data, protocolVersion);
-        writeFrame(ByteBufUtil.getBytes(data));
+        writeFrame(data);
+        data.release();
     }
 
     @Override
-    public void disconnect(Component reason) {
+    public void disconnect() {
         try {
             adapter.close();
 
             if (pairedConnection != null && pairedConnection.isConnected()) {
-                pairedConnection.disconnect(reason);
+                pairedConnection.disconnect();
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

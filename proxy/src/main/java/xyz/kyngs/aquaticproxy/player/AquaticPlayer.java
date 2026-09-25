@@ -32,4 +32,13 @@ public class AquaticPlayer implements Player {
     public GameProfile getProfile() {
         return profile;
     }
+
+    @Override
+    public String toString() {
+        return "AquaticPlayer{" +
+               "uuid=" + uuid +
+               ", profile=" + profile +
+               ", connection=" + connection +
+               '}';
+    }
 }

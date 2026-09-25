@@ -3,6 +3,7 @@ package xyz.kyngs.aquaticproxy.network;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,44 +42,68 @@ public class AquaticClientConnection extends AquaticConnection<ClientSessionHand
 
     @Override
     public void handleFrame(ByteBuf data) {
-        data.markReaderIndex();
-        var packetId = ProtocolUtil.readVarInt(data);
+        var packetHeaderIndex = data.readerIndex();
 
-        var handlers = networkModule.getPacketHandlerRegistry().getPublishedServerboundHandlers(sessionHandler.getProtocolState(), protocolVersion.version(), packetId);
+        var packetId = ProtocolUtil.readVarInt(data);
+        var state = sessionHandler.getProtocolState();
+        var cachedVersion = protocolVersion;
+
+        var handlers = networkModule.getPacketHandlerRegistry().getPublishedServerboundHandlers(state, cachedVersion.version(), packetId);
 
         if (handlers != null) {
+            var packetDataIndex = data.readerIndex();
             for (var handler : handlers) {
                 var packet = handler.packet().packetSupplier().get();
-                packet.decode(data, protocolVersion);
+                packet.decode(data, cachedVersion);
+                data.readerIndex(packetDataIndex);
                 switch (handler.handler().handle(packet, this)) {
                     case FORWARD -> {
                     }
                     case MODIFIED -> {
-                        data = Unpooled.buffer(data.capacity());
-                        packet.encode(data, protocolVersion);
+                        if (data.maxWritableBytes() == 0) {
+                            var expanded = data.alloc().buffer(data.writerIndex() * 2);
+                            expanded.writeBytes(data, packetHeaderIndex, packetDataIndex);
+                            expanded.readerIndex(packetDataIndex);
+                            packet.encode(expanded, cachedVersion);
+                            data.release();
+                            data = expanded;
+                        } else {
+                            data.writerIndex(packetDataIndex);
+                            packet.encode(data, cachedVersion);
+                        }
                     }
                     case CANCELLED -> {
+                        data.release();
                         return;
                     }
                 }
             }
         }
 
-        if (pairedConnection == null || pairedConnection.getSessionHandler().getProtocolState() != sessionHandler.getProtocolState()) {
-            if (sessionHandler.getProtocolState() == ProtocolState.CONFIGURATION) {
-                data.resetReaderIndex();
+        var pc = pairedConnection;
+
+        if (pc == null || pc.getSessionHandler().getProtocolState() != state) {
+            if (state == ProtocolState.CONFIGURATION) {
+                data.readerIndex(packetHeaderIndex);
                 queuedConfigurationFrames.add(data);
-            }
+            } else data.release();
             return;
         }
 
-        data.resetReaderIndex();
-        pairedConnection.writeFrame(ByteBufUtil.getBytes(data));
+        data.readerIndex(packetHeaderIndex);
+        pc.writeFrame(data);
+        data.release();
     }
 
     @Override
     public @Nullable Player getPlayer() {
         return player;
+    }
+
+    @Override
+    public void disconnect(Component reason) {
+        sessionHandler.sendDisconnectReason(reason);
+        disconnect();
     }
 
     public void setPlayer(Player player) {

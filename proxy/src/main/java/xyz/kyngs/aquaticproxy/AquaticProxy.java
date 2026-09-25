@@ -26,6 +26,7 @@ public class AquaticProxy implements Proxy {
     private final AquaticModuleManager moduleManager;
     private final AquaticPluginManager pluginManager;
     private final AtomicReference<State> state;
+    private Thread dummyThread;
 
     public AquaticProxy() {
         this.state = new AtomicReference<>(State.STARTING);
@@ -62,6 +63,7 @@ public class AquaticProxy implements Proxy {
     }
 
     private void shutdownHook() {
+        dummyThread.interrupt();
         if (getState() == State.STOPPING) {
             return;
         }
@@ -107,12 +109,13 @@ public class AquaticProxy implements Proxy {
     }
 
     private void startDummyThread() {
-        Thread dummyThread = new Thread(() -> {
+        dummyThread = new Thread(() -> {
             while (getState() == State.RUNNING) {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    break;
                 }
             }
         });

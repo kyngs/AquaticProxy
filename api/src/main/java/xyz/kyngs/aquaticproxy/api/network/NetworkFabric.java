@@ -1,5 +1,6 @@
 package xyz.kyngs.aquaticproxy.api.network;
 
+import io.netty.buffer.ByteBuf;
 import org.jetbrains.annotations.Nullable;
 import xyz.kyngs.aquaticproxy.api.backend.BackendServer;
 
@@ -16,7 +17,7 @@ public interface NetworkFabric {
     BackendConnection openBackendConnection(BackendServer server, @Nullable ClientConnection pairedClient) throws IOException;
 
     interface Adapter<T> {
-        void writeFrame(byte[] data) throws IOException;
+        void writeFrame(ByteBuf data) throws IOException;
 
         void close() throws IOException;
 

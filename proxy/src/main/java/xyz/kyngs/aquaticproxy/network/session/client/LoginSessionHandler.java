@@ -1,10 +1,13 @@
 package xyz.kyngs.aquaticproxy.network.session.client;
 
+import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.ConfigurationDisconnectPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.LoginAcknowledgedPacket;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.LoginDisconnectPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.LoginStartPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.LoginSuccessPacket;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
@@ -67,5 +70,10 @@ public class LoginSessionHandler implements ClientSessionHandler {
         }
         connection.switchProtocolState(new ConfigurationSessionHandler(connection, profile, sessionId, moduleManager, playerModule));
         return PacketHandler.Result.CANCELLED;
+    }
+
+    @Override
+    public void sendDisconnectReason(Component reason) {
+        connection.writePacket(new LoginDisconnectPacket(reason));
     }
 }
