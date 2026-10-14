@@ -14,6 +14,16 @@ public class LoginDisconnectPacket extends DisconnectPacket {
         super(reason);
     }
 
-    public  LoginDisconnectPacket() {
+    public LoginDisconnectPacket() {
+    }
+
+    @Override
+    public void decode(ByteBuf buf, ProtocolVersion version) {
+        reason = getJsonChatSerializer(version).deserialize(readString(buf));
+    }
+
+    @Override
+    public void encode(ByteBuf buf, ProtocolVersion version) {
+        writeString(buf, getJsonChatSerializer(version).serialize(reason));
     }
 }

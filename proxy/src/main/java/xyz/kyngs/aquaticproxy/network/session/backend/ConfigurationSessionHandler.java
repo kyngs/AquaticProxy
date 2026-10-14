@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.kyngs.aquaticproxy.api.network.BackendConnection;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.AcknowledgeFinishConfigurationPacket;
@@ -30,6 +31,8 @@ public class ConfigurationSessionHandler implements BackendSessionHandler {
 
     @Override
     public void activate() {
+        connection.getLoginFuture().complete(new BackendConnection.LoginResult(true, null));
+
         for (ByteBuf frame : connection.getPairedConnection().getQueuedConfigurationFrames()) {
             LOGGER.info("Sending queued configuration frame to backend connection for player {}", player);
             connection.writeFrame(frame);

@@ -6,6 +6,7 @@ import xyz.kyngs.aquaticproxy.api.network.protocol.PacketRegistry;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolVersion;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.AcknowledgeFinishConfigurationPacket;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.ConfigurationDisconnectPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.FinishConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.handshake.HandshakePacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.*;
@@ -97,6 +98,12 @@ public class BuiltinPackets {
                 .forDirection(PacketDirection.CLIENTBOUND)
                 .forState(ProtocolState.CONFIGURATION)
                 .forId(MINECRAFT_1_20_2, LATEST, 0x03)
+                .register();
+
+        registry.buildPacket(owner, ConfigurationDisconnectPacket::new)
+                .forDirection(PacketDirection.CLIENTBOUND)
+                .forState(ProtocolState.CONFIGURATION)
+                .forId(MINECRAFT_1_20_2, LATEST, 0x02)
                 .register();
 
         // ==PLAY==

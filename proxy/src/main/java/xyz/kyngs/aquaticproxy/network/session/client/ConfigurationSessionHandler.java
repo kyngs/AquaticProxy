@@ -9,7 +9,6 @@ import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.AcknowledgeFinishConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.ConfigurationDisconnectPacket;
-import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.FinishConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
 import xyz.kyngs.aquaticproxy.api.player.Player;
 import xyz.kyngs.aquaticproxy.api.player.PlayerModule;
@@ -54,7 +53,7 @@ public class ConfigurationSessionHandler implements ClientSessionHandler {
 
         var defaultServer = moduleManager.getBackendModule().getBackendServers().stream().findFirst().orElse(null);
 
-        var initialServerEvent = new ChooseInitialServerEvent(defaultServer, player);
+        var initialServerEvent = new ChooseInitialServerEvent(player, defaultServer);
         eventModule.fire(initialServerEvent);
 
         if (!connection.isConnected()) return;
@@ -68,7 +67,7 @@ public class ConfigurationSessionHandler implements ClientSessionHandler {
 
         LOGGER.info("Connecting player {} to initial server {}", player, server);
 
-        connection.setPairedConnection(moduleManager.getNetworkModule().openBackendConnection(server, player.getConnection()));
+        player.connectToBackend(server);
     }
 
     @Override

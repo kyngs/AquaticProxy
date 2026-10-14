@@ -1,9 +1,7 @@
 package xyz.kyngs.aquaticproxy.network;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
-import net.kyori.adventure.text.Component;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +15,6 @@ import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 
 import java.io.IOException;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class AquaticConnection<S extends SessionHandler, PC extends Connection> implements Connection {
@@ -98,19 +95,6 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
         packet.encode(data, protocolVersion);
         writeFrame(data);
         data.release();
-    }
-
-    @Override
-    public void disconnect() {
-        try {
-            adapter.close();
-
-            if (pairedConnection != null && pairedConnection.isConnected()) {
-                pairedConnection.disconnect();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override

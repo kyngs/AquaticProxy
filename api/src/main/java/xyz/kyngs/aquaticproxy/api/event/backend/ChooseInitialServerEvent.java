@@ -1,33 +1,33 @@
 package xyz.kyngs.aquaticproxy.api.event.backend;
 
 import net.kyori.adventure.key.Key;
+import org.jetbrains.annotations.Nullable;
 import xyz.kyngs.aquaticproxy.api.backend.BackendServer;
+import xyz.kyngs.aquaticproxy.api.event.AbstractPlayerEvent;
+import xyz.kyngs.aquaticproxy.api.event.AbstractPlayerResultedEvent;
 import xyz.kyngs.aquaticproxy.api.event.Event;
 import xyz.kyngs.aquaticproxy.api.event.EventKey;
 import xyz.kyngs.aquaticproxy.api.network.ClientConnection;
 import xyz.kyngs.aquaticproxy.api.player.Player;
 
-public class ChooseInitialServerEvent implements Event {
+public class ChooseInitialServerEvent extends AbstractPlayerResultedEvent<BackendServer> {
 
     public static final EventKey<ChooseInitialServerEvent> KEY = new EventKey<>(Key.key("aquaticproxy", "choose_initial_server"), ChooseInitialServerEvent.class);
-    private final Player player;
-    private BackendServer server;
 
-    public ChooseInitialServerEvent(BackendServer server, Player player) {
-        this.server = server;
-        this.player = player;
+    public ChooseInitialServerEvent(Player player) {
+        super(player);
     }
 
-    public Player getPlayer() {
-        return player;
+    public ChooseInitialServerEvent(Player player, @Nullable BackendServer server) {
+        super(player, server);
     }
 
     public BackendServer getServer() {
-        return server;
+        return getResult();
     }
 
     public void setServer(BackendServer server) {
-        this.server = server;
+        setResult(server);
     }
 
     @Override

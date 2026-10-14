@@ -7,4 +7,7 @@ public class ConfigurationDisconnectPacket extends DisconnectPacket {
     public ConfigurationDisconnectPacket(Component reason) {
         super(reason);
     }
+
+    public ConfigurationDisconnectPacket() {
+    }
 }

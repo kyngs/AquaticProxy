@@ -2,6 +2,7 @@ package xyz.kyngs.aquaticproxy.network.fabric;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.kyngs.aquaticproxy.api.backend.BackendServer;
@@ -177,14 +178,11 @@ public class SocketNetworkFabric implements NetworkFabric {
             try {
                 var packet = readPacket(backend.getInputStream());
                 connection.handleFrame(packet);
-            } catch (EOFException e) {
-                try {
-                    backend.close();
-                } catch (IOException ex) {
-                    LOGGER.error("Error closing backend socket", ex);
-                }
+            } catch (EOFException | SocketException e) {
+                connection.disconnect(Component.text("Socket closed"));
                 break;
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
+                connection.disconnect(Component.text("Error reading from backend: " + e.getMessage()));
                 LOGGER.error("Error reading from backend", e);
                 try {
                     backend.close();

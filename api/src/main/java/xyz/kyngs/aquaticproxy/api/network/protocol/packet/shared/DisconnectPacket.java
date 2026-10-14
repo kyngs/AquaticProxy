@@ -10,7 +10,7 @@ import static xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolUtil.writeComp
 
 public class DisconnectPacket implements Packet {
 
-    private Component reason;
+    protected Component reason;
 
     public DisconnectPacket(Component reason) {
         this.reason = reason;

@@ -7,6 +7,8 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.kyngs.aquaticproxy.api.event.EventModule;
+import xyz.kyngs.aquaticproxy.api.event.backend.KickedFromServerEvent;
 import xyz.kyngs.aquaticproxy.api.network.BackendConnection;
 import xyz.kyngs.aquaticproxy.api.network.ClientConnection;
 import xyz.kyngs.aquaticproxy.api.network.NetworkFabric;
@@ -18,16 +20,21 @@ import xyz.kyngs.aquaticproxy.api.player.Player;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 import xyz.kyngs.aquaticproxy.network.session.client.HandshakeSessionHandler;
 
+import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AquaticClientConnection extends AquaticConnection<ClientSessionHandler, BackendConnection> implements ClientConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(AquaticClientConnection.class);
     private final Set<ByteBuf> queuedConfigurationFrames;
+    private final EventModule eventModule;
     private Player player;
+
     public AquaticClientConnection(NetworkFabric.ClientAdapter<?> adapter, AquaticNetworkModule networkManager, AquaticModuleManager moduleManager) {
         super(adapter, networkManager, moduleManager);
         this.queuedConfigurationFrames = ConcurrentHashMap.newKeySet();
+        this.eventModule = moduleManager.getEventModule();
     }
 
     @Override
@@ -96,6 +103,20 @@ public class AquaticClientConnection extends AquaticConnection<ClientSessionHand
     }
 
     @Override
+    public void switchPairedConnection(@Nullable BackendConnection connection) {
+        if (!connectionLock.writeLock().isHeldByCurrentThread()) {
+            throw new IllegalStateException("Cannot switch paired connection without holding the connection's write lock");
+        }
+
+        var pc = pairedConnection;
+        if (pc != null) {
+            pc.disconnect(Component.text("Changing backend connection"));
+        }
+
+        setPairedConnection(connection);
+    }
+
+    @Override
     public @Nullable Player getPlayer() {
         return player;
     }
@@ -103,7 +124,22 @@ public class AquaticClientConnection extends AquaticConnection<ClientSessionHand
     @Override
     public void disconnect(Component reason) {
         sessionHandler.sendDisconnectReason(reason);
-        disconnect();
+        try {
+            adapter.close();
+        } catch (IOException _) {
+        }
+    }
+
+    public void handleServerKick(Component reason, BackendConnection backend) {
+        var event = new KickedFromServerEvent(player, new KickedFromServerEvent.Kick(reason), pairedConnection != null && pairedConnection != backend);
+
+        eventModule.fire(event);
+
+        switch (event.getResult()) {
+            case KickedFromServerEvent.Kick kick -> disconnect(kick.reason());
+            case KickedFromServerEvent.Redirect redirect -> player.connectToBackend(redirect.server());
+            case KickedFromServerEvent.None none -> {}
+        }
     }
 
     public void setPlayer(Player player) {

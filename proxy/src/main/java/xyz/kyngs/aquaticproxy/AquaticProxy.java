@@ -127,7 +127,7 @@ public class AquaticProxy implements Proxy {
         moduleManager.registerProvider(this, NetworkModule.KEY, 0, () -> new AquaticNetworkModule(this, moduleManager));
         moduleManager.registerProvider(this, EventModule.KEY, 0, () -> new AquaticEventModule(this));
         moduleManager.registerProvider(this, ServerStatusModule.KEY, 0, AquaticServerStatusModule::new);
-        moduleManager.registerProvider(this, PlayerModule.KEY, 0, AquaticPlayerModule::new);
+        moduleManager.registerProvider(this, PlayerModule.KEY, 0, () -> new AquaticPlayerModule(moduleManager));
         moduleManager.registerProvider(this, BackendModule.KEY, 0, AquaticBackendModule::new);
     }
 }

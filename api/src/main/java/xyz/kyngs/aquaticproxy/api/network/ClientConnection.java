@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
 import xyz.kyngs.aquaticproxy.api.player.Player;
 
-import java.awt.*;
 import java.util.Set;
 
 public interface ClientConnection extends Connection {
@@ -17,11 +16,13 @@ public interface ClientConnection extends Connection {
 
     @Nullable BackendConnection getPairedConnection();
 
+    void switchPairedConnection(@Nullable BackendConnection connection);
+
+    @Nullable Player getPlayer();
+
     default Set<ByteBuf> getQueuedConfigurationFrames() {
         return Set.of();
     }
 
-    @Nullable Player getPlayer();
-
-    void disconnect(Component reason);
+    default void handleServerKick(Component reason, BackendConnection backend) {}
 }

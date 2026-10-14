@@ -22,7 +22,11 @@ public interface Connection {
 
     void setProtocolVersion(ProtocolVersion version);
 
-    void disconnect();
+    default void disconnect() {
+        disconnect(Component.empty());
+    }
+
+    void disconnect(Component reason);
 
     boolean isConnected();
 

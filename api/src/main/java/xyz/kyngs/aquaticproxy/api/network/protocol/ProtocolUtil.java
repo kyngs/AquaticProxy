@@ -1,13 +1,26 @@
 package xyz.kyngs.aquaticproxy.api.network.protocol;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.internal.LazilyParsedNumber;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.ByteBufUtil;
+import net.kyori.adventure.nbt.*;
+import net.kyori.adventure.nbt.api.BinaryTagHolder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.json.JSONOptions;
 import net.kyori.option.OptionSchema;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 // Some parts here are kindly borrowed from https://github.com/PaperMC/Velocity/blob/bc553001230ba01fc41a9a8e0aad1b21b87fabfc/proxy/src/main/java/com/velocitypowered/proxy/protocol/ProtocolUtils.java
@@ -103,6 +116,11 @@ public class ProtocolUtil {
     private static final PacketDecoderException BAD_VARINT_CACHED =
             new PacketDecoderException("Bad VarInt decoded");
     private static final int[] VAR_INT_LENGTHS = new int[33];
+    private static final BinaryTagType<? extends BinaryTag>[] BINARY_TAG_TYPES = new BinaryTagType[] {
+            BinaryTagTypes.END, BinaryTagTypes.BYTE, BinaryTagTypes.SHORT, BinaryTagTypes.INT,
+            BinaryTagTypes.LONG, BinaryTagTypes.FLOAT, BinaryTagTypes.DOUBLE,
+            BinaryTagTypes.BYTE_ARRAY, BinaryTagTypes.STRING, BinaryTagTypes.LIST,
+            BinaryTagTypes.COMPOUND, BinaryTagTypes.INT_ARRAY, BinaryTagTypes.LONG_ARRAY};
 
     static {
         for (int i = 0; i <= 32; ++i) {
@@ -307,10 +325,208 @@ public class ProtocolUtil {
     }
 
     public static Component readComponent(ByteBuf buf, ProtocolVersion version) {
-        return getJsonChatSerializer(version).deserialize(readString(buf));
+        var json = deserializeNBTJSON(readBinaryTag(buf, version));
+        return getJsonChatSerializer(version).deserialize(json.toString());
+    }
+
+    public static JsonElement deserializeNBTJSON(BinaryTag tag) {
+        switch (tag.type().id()) {
+            case 1://BinaryTagTypes.BYTE:
+                return new JsonPrimitive(((ByteBinaryTag) tag).value());
+            case 2://BinaryTagTypes.SHORT:
+                return new JsonPrimitive(((ShortBinaryTag) tag).value());
+            case 3://BinaryTagTypes.INT:
+                return new JsonPrimitive(((IntBinaryTag) tag).value());
+            case 4://BinaryTagTypes.LONG:
+                return new JsonPrimitive(((LongBinaryTag) tag).value());
+            case 5://BinaryTagTypes.FLOAT:
+                return new JsonPrimitive(((FloatBinaryTag) tag).value());
+            case 6://BinaryTagTypes.DOUBLE:
+                return new JsonPrimitive(((DoubleBinaryTag) tag).value());
+            case 7://BinaryTagTypes.BYTE_ARRAY:
+                byte[] byteArray = ((ByteArrayBinaryTag) tag).value();
+
+                JsonArray jsonByteArray = new JsonArray(byteArray.length);
+                for (byte b : byteArray) {
+                    jsonByteArray.add(new JsonPrimitive(b));
+                }
+
+                return jsonByteArray;
+            case 8://BinaryTagTypes.STRING:
+                return new JsonPrimitive(((StringBinaryTag) tag).value());
+            case 9://BinaryTagTypes.LIST:
+                ListBinaryTag items = (ListBinaryTag) tag;
+                JsonArray jsonList = new JsonArray(items.size());
+
+                for (BinaryTag subTag : items) {
+                    jsonList.add(deserializeNBTJSON(subTag));
+                }
+
+                return jsonList;
+            case 10://BinaryTagTypes.COMPOUND:
+                CompoundBinaryTag compound = (CompoundBinaryTag) tag;
+                JsonObject jsonObject = new JsonObject();
+
+                compound.keySet().forEach(key -> {
+                    // [{"text":"test1"},"test2"] can't be represented as a binary list tag
+                    // it is represented by a list tag with two compound tags
+                    // the second compound tag will have an empty key mapped to "test2"
+                    // without this fix this would lead to an invalid json component:
+                    // [{"text":"test1"},{"":"test2"}]
+                    jsonObject.add(key.isEmpty() ? "text" : key, deserializeNBTJSON(compound.get(key)));
+                });
+
+                return jsonObject;
+            case 11://BinaryTagTypes.INT_ARRAY:
+                int[] intArray = ((IntArrayBinaryTag) tag).value();
+
+                JsonArray jsonIntArray = new JsonArray(intArray.length);
+                for (int i : intArray) {
+                    jsonIntArray.add(new JsonPrimitive(i));
+                }
+
+                return jsonIntArray;
+            case 12://BinaryTagTypes.LONG_ARRAY:
+                long[] longArray = ((LongArrayBinaryTag) tag).value();
+
+                JsonArray jsonLongArray = new JsonArray(longArray.length);
+                for (long l : longArray) {
+                    jsonLongArray.add(new JsonPrimitive(l));
+                }
+
+                return jsonLongArray;
+            default:
+                throw new IllegalArgumentException("Unknown NBT tag: " + tag);
+        }
+    }
+
+    public static BinaryTag serializeNBTJSON(JsonElement json) {
+        if (json instanceof JsonPrimitive jsonPrimitive) {
+            if (jsonPrimitive.isNumber()) {
+                Number number = json.getAsNumber();
+
+                if (number instanceof Byte) {
+                    return ByteBinaryTag.byteBinaryTag((Byte) number);
+                } else if (number instanceof Short) {
+                    return ShortBinaryTag.shortBinaryTag((Short) number);
+                } else if (number instanceof Integer) {
+                    return IntBinaryTag.intBinaryTag((Integer) number);
+                } else if (number instanceof Long) {
+                    return LongBinaryTag.longBinaryTag((Long) number);
+                } else if (number instanceof Float) {
+                    return FloatBinaryTag.floatBinaryTag((Float) number);
+                } else if (number instanceof Double) {
+                    return DoubleBinaryTag.doubleBinaryTag((Double) number);
+                } else if (number instanceof LazilyParsedNumber) {
+                    return IntBinaryTag.intBinaryTag(number.intValue());
+                }
+            } else if (jsonPrimitive.isString()) {
+                return StringBinaryTag.stringBinaryTag(jsonPrimitive.getAsString());
+            } else if (jsonPrimitive.isBoolean()) {
+                return ByteBinaryTag.byteBinaryTag((byte) (jsonPrimitive.getAsBoolean() ? 1 : 0));
+            } else {
+                throw new IllegalArgumentException("Unknown JSON primitive: " + jsonPrimitive);
+            }
+        } else if (json instanceof JsonObject) {
+            CompoundBinaryTag.Builder compound = CompoundBinaryTag.builder();
+
+            for (Map.Entry<String, JsonElement> property : ((JsonObject) json).entrySet()) {
+                compound.put(property.getKey(), serializeNBTJSON(property.getValue()));
+            }
+
+            return compound.build();
+        } else if (json instanceof JsonArray) {
+            List<JsonElement> jsonArray = ((JsonArray) json).asList();
+
+            if (jsonArray.isEmpty()) {
+                return ListBinaryTag.empty();
+            }
+
+            List<BinaryTag> tagItems = new ArrayList<>(jsonArray.size());
+            BinaryTagType<? extends BinaryTag> listType = null;
+
+            for (JsonElement jsonEl : jsonArray) {
+                BinaryTag tag = serializeNBTJSON(jsonEl);
+                tagItems.add(tag);
+
+                if (listType == null) {
+                    listType = tag.type();
+                } else if (listType != tag.type()) {
+                    listType = BinaryTagTypes.COMPOUND;
+                }
+            }
+
+            switch (listType.id()) {
+                case 1://BinaryTagTypes.BYTE:
+                    byte[] bytes = new byte[jsonArray.size()];
+                    for (int i = 0; i < bytes.length; i++) {
+                        bytes[i] = jsonArray.get(i).getAsNumber().byteValue();
+                    }
+
+                    return ByteArrayBinaryTag.byteArrayBinaryTag(bytes);
+                case 3://BinaryTagTypes.INT:
+                    int[] ints = new int[jsonArray.size()];
+                    for (int i = 0; i < ints.length; i++) {
+                        ints[i] = jsonArray.get(i).getAsNumber().intValue();
+                    }
+
+                    return IntArrayBinaryTag.intArrayBinaryTag(ints);
+                case 4://BinaryTagTypes.LONG:
+                    long[] longs = new long[jsonArray.size()];
+                    for (int i = 0; i < longs.length; i++) {
+                        longs[i] = jsonArray.get(i).getAsNumber().longValue();
+                    }
+
+                    return LongArrayBinaryTag.longArrayBinaryTag(longs);
+                case 10://BinaryTagTypes.COMPOUND:
+                    tagItems.replaceAll(tag -> {
+                        if (tag.type() == BinaryTagTypes.COMPOUND) {
+                            return tag;
+                        } else {
+                            return CompoundBinaryTag.builder().put("", tag).build();
+                        }
+                    });
+                    break;
+            }
+
+            return ListBinaryTag.listBinaryTag(listType, tagItems);
+        }
+
+        return EndBinaryTag.endBinaryTag();
+    }
+
+    public static BinaryTag readBinaryTag(ByteBuf buf, ProtocolVersion version) {
+        BinaryTagType<?> type = BINARY_TAG_TYPES[buf.readByte()];
+        if (!version.isAtLeast(ProtocolVersion.MINECRAFT_1_20_2)) {
+            buf.skipBytes(buf.readUnsignedShort());
+        }
+        try {
+            return type.read(new ByteBufInputStream(buf));
+        } catch (IOException thrown) {
+            throw new PacketDecoderException("Unable to parse BinaryTag, full error: " + thrown.getMessage());
+        }
+    }
+
+    public static <T extends BinaryTag> void writeBinaryTag(ByteBuf buf, ProtocolVersion version,
+                                                            T tag) {
+        BinaryTagType<T> type = (BinaryTagType<T>) tag.type();
+        buf.writeByte(type.id());
+        try {
+            if (!version.isAtLeast(ProtocolVersion.MINECRAFT_1_20_2)) {
+                // Empty name
+                buf.writeShort(0);
+            }
+            type.write(tag, new ByteBufOutputStream(buf));
+        } catch (IOException e) {
+            throw new PacketDecoderException("Unable to encode BinaryTag");
+        }
     }
 
     public static void writeComponent(ByteBuf buf, Component component, ProtocolVersion version) {
-        writeString(buf, getJsonChatSerializer(version).serialize(component));
+        if (version.isAtLeast(ProtocolVersion.MINECRAFT_1_20_3)) {
+            writeBinaryTag(buf, version, serializeNBTJSON(getJsonChatSerializer(version).serializeToTree(component)));
+        } else {
+            writeString(buf, getJsonChatSerializer(version).serialize(component));
+        }
     }
 }
