@@ -14,13 +14,13 @@ import xyz.kyngs.aquaticproxy.network.compression.CompressionPostProcessor;
 import xyz.kyngs.aquaticproxy.network.compression.CompressionPreProcessor;
 import xyz.kyngs.aquaticproxy.network.compression.JavaZipCompressor;
 
-public class LoginSessionHandler implements BackendSessionHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoginSessionHandler.class);
+public class BackendLoginSessionHandler implements BackendSessionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BackendLoginSessionHandler.class);
 
     private final AquaticBackendConnection connection;
     private final Player player;
 
-    public LoginSessionHandler(AquaticBackendConnection connection, Player player) {
+    public BackendLoginSessionHandler(AquaticBackendConnection connection, Player player) {
         this.connection = connection;
         this.player = player;
     }
@@ -48,7 +48,7 @@ public class LoginSessionHandler implements BackendSessionHandler {
     @Override
     public PacketHandler.Result handle(LoginSuccessPacket packet) {
         LOGGER.info("Backend server accepted player {} during login", player);
-        connection.switchProtocolState(new ConfigurationSessionHandler(connection, player));
+        connection.switchProtocolState(new BackendConfigurationSessionHandler(connection, player));
 
         return PacketHandler.Result.CANCELLED;
     }

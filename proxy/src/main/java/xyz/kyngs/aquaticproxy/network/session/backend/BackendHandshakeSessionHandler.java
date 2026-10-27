@@ -1,18 +1,16 @@
 package xyz.kyngs.aquaticproxy.network.session.backend;
 
-import xyz.kyngs.aquaticproxy.api.backend.BackendServer;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolVersion;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.handshake.HandshakePacket;
 import xyz.kyngs.aquaticproxy.api.network.session.BackendSessionHandler;
-import xyz.kyngs.aquaticproxy.api.player.Player;
 import xyz.kyngs.aquaticproxy.network.AquaticBackendConnection;
 
-public class HandshakeSessionHandler implements BackendSessionHandler {
+public class BackendHandshakeSessionHandler implements BackendSessionHandler {
 
     private final AquaticBackendConnection connection;
 
-    public HandshakeSessionHandler(AquaticBackendConnection connection) {
+    public BackendHandshakeSessionHandler(AquaticBackendConnection connection) {
         this.connection = connection;
     }
 
@@ -33,7 +31,7 @@ public class HandshakeSessionHandler implements BackendSessionHandler {
     }
 
     public void switchToLogin() {
-        connection.switchProtocolState(new LoginSessionHandler(connection, connection.getPairedConnection().getPlayer()));
+        connection.switchProtocolState(new BackendLoginSessionHandler(connection, connection.getPairedConnection().getPlayer()));
     }
 
     @Override

@@ -12,13 +12,13 @@ import xyz.kyngs.aquaticproxy.api.network.session.BackendSessionHandler;
 import xyz.kyngs.aquaticproxy.api.player.Player;
 import xyz.kyngs.aquaticproxy.network.AquaticBackendConnection;
 
-public class ConfigurationSessionHandler implements BackendSessionHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationSessionHandler.class);
+public class BackendConfigurationSessionHandler implements BackendSessionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BackendConfigurationSessionHandler.class);
 
     private final AquaticBackendConnection connection;
     private final Player player;
 
-    public ConfigurationSessionHandler(AquaticBackendConnection connection, Player player) {
+    public BackendConfigurationSessionHandler(AquaticBackendConnection connection, Player player) {
         this.connection = connection;
         this.player = player;
     }
@@ -59,6 +59,6 @@ public class ConfigurationSessionHandler implements BackendSessionHandler {
     public void switchToPlay() {
         var pc = connection.getPairedConnection();
         if (pc != null) pc.writePacket(new FinishConfigurationPacket());
-        connection.switchProtocolState(new PlaySessionHandler(connection, player));
+        connection.switchProtocolState(new BackendPlaySessionHandler(connection, player));
     }
 }

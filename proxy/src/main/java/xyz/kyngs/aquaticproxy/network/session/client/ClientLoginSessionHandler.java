@@ -18,15 +18,15 @@ import xyz.kyngs.aquaticproxy.network.compression.JavaZipCompressor;
 import java.util.List;
 import java.util.UUID;
 
-public class LoginSessionHandler implements ClientSessionHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoginSessionHandler.class);
+public class ClientLoginSessionHandler implements ClientSessionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientLoginSessionHandler.class);
 
     private final AquaticClientConnection connection;
     private final AquaticModuleManager moduleManager;
     private final UUID sessionId;
     private GameProfile profile;
 
-    public LoginSessionHandler(AquaticClientConnection connection, AquaticModuleManager moduleManager) {
+    public ClientLoginSessionHandler(AquaticClientConnection connection, AquaticModuleManager moduleManager) {
         super();
         this.connection = connection;
         this.moduleManager = moduleManager;
@@ -78,7 +78,7 @@ public class LoginSessionHandler implements ClientSessionHandler {
             connection.disconnect();
             return PacketHandler.Result.CANCELLED;
         }
-        connection.switchProtocolState(new ConfigurationSessionHandler(connection, profile, sessionId, moduleManager, playerModule));
+        connection.switchProtocolState(new ClientConfigurationSessionHandler(connection, profile, sessionId, moduleManager, playerModule));
         return PacketHandler.Result.CANCELLED;
     }
 

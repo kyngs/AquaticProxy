@@ -2,23 +2,21 @@ package xyz.kyngs.aquaticproxy.network.session.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import xyz.kyngs.aquaticproxy.api.module.ModuleManager;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolVersion;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.handshake.HandshakePacket;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
-import xyz.kyngs.aquaticproxy.api.status.ServerStatusModule;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 import xyz.kyngs.aquaticproxy.network.AquaticClientConnection;
 
-public class HandshakeSessionHandler implements ClientSessionHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(HandshakeSessionHandler.class);
+public class ClientHandshakeSessionHandler implements ClientSessionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientHandshakeSessionHandler.class);
 
     private final AquaticClientConnection connection;
     private final AquaticModuleManager moduleManager;
 
-    public HandshakeSessionHandler(AquaticClientConnection connection, AquaticModuleManager moduleManager) {
+    public ClientHandshakeSessionHandler(AquaticClientConnection connection, AquaticModuleManager moduleManager) {
         super();
         this.connection = connection;
         this.moduleManager = moduleManager;
@@ -57,10 +55,10 @@ public class HandshakeSessionHandler implements ClientSessionHandler {
             connection.disconnect();
             return;
         }
-        connection.switchProtocolState(new StatusSessionHandler(connection, statusModule));
+        connection.switchProtocolState(new ClientStatusSessionHandler(connection, statusModule));
     }
 
     public void switchToLogin() {
-        connection.switchProtocolState(new LoginSessionHandler(connection, moduleManager));
+        connection.switchProtocolState(new ClientLoginSessionHandler(connection, moduleManager));
     }
 }

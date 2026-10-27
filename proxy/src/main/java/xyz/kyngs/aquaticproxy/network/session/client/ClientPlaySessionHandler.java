@@ -3,7 +3,6 @@ package xyz.kyngs.aquaticproxy.network.session.client;
 import net.kyori.adventure.text.Component;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
-import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.FinishConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.play.AcknowledgeConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.play.PlayDisconnectPacket;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
@@ -11,13 +10,13 @@ import xyz.kyngs.aquaticproxy.api.player.Player;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 import xyz.kyngs.aquaticproxy.network.AquaticClientConnection;
 
-public class PlaySessionHandler implements ClientSessionHandler {
+public class ClientPlaySessionHandler implements ClientSessionHandler {
 
     private final AquaticClientConnection connection;
     private final Player player;
     private final AquaticModuleManager moduleManager;
 
-    public PlaySessionHandler(AquaticClientConnection connection, Player player, AquaticModuleManager moduleManager) {
+    public ClientPlaySessionHandler(AquaticClientConnection connection, Player player, AquaticModuleManager moduleManager) {
         this.connection = connection;
         this.player = player;
         this.moduleManager = moduleManager;
@@ -46,7 +45,7 @@ public class PlaySessionHandler implements ClientSessionHandler {
     public void switchToConfiguration() {
         var pc = connection.getPairedConnection();
         if (pc != null) pc.writePacket(new AcknowledgeConfigurationPacket());
-        connection.switchProtocolState(new PlaySessionHandler(connection, player, moduleManager));
+        connection.switchProtocolState(new ClientPlaySessionHandler(connection, player, moduleManager));
     }
 
     @Override

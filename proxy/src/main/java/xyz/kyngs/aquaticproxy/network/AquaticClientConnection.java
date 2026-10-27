@@ -1,8 +1,6 @@
 package xyz.kyngs.aquaticproxy.network;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -12,18 +10,15 @@ import xyz.kyngs.aquaticproxy.api.event.backend.KickedFromServerEvent;
 import xyz.kyngs.aquaticproxy.api.network.BackendConnection;
 import xyz.kyngs.aquaticproxy.api.network.ClientConnection;
 import xyz.kyngs.aquaticproxy.api.network.NetworkFabric;
-import xyz.kyngs.aquaticproxy.api.network.protocol.PacketDirection;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolUtil;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
 import xyz.kyngs.aquaticproxy.api.player.Player;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
-import xyz.kyngs.aquaticproxy.network.session.client.HandshakeSessionHandler;
+import xyz.kyngs.aquaticproxy.network.session.client.ClientHandshakeSessionHandler;
 
-import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AquaticClientConnection extends AquaticConnection<ClientSessionHandler, BackendConnection> implements ClientConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(AquaticClientConnection.class);
@@ -44,7 +39,7 @@ public class AquaticClientConnection extends AquaticConnection<ClientSessionHand
 
     @Override
     protected ClientSessionHandler createInitialSessionHandler() {
-        return new HandshakeSessionHandler(this, moduleManager);
+        return new ClientHandshakeSessionHandler(this, moduleManager);
     }
 
     @Override

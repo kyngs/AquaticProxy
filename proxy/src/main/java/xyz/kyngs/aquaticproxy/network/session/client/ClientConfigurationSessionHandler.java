@@ -19,8 +19,8 @@ import xyz.kyngs.aquaticproxy.network.AquaticClientConnection;
 
 import java.util.UUID;
 
-public class ConfigurationSessionHandler implements ClientSessionHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationSessionHandler.class);
+public class ClientConfigurationSessionHandler implements ClientSessionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientConfigurationSessionHandler.class);
 
     private final AquaticClientConnection connection;
     private final GameProfile profile;
@@ -30,7 +30,7 @@ public class ConfigurationSessionHandler implements ClientSessionHandler {
     private final PlayerModule playerModule;
     private Player player;
 
-    public ConfigurationSessionHandler(AquaticClientConnection connection, GameProfile profile, UUID sessionId, AquaticModuleManager moduleManager, PlayerModule playerModule) {
+    public ClientConfigurationSessionHandler(AquaticClientConnection connection, GameProfile profile, UUID sessionId, AquaticModuleManager moduleManager, PlayerModule playerModule) {
         super();
         this.connection = connection;
         this.profile = profile;
@@ -98,7 +98,7 @@ public class ConfigurationSessionHandler implements ClientSessionHandler {
     public void switchToPlay() {
         var pc = connection.getPairedConnection();
         if (pc != null) pc.writePacket(new AcknowledgeFinishConfigurationPacket());
-        connection.switchProtocolState(new PlaySessionHandler(connection, player, moduleManager));
+        connection.switchProtocolState(new ClientPlaySessionHandler(connection, player, moduleManager));
     }
 
     @Override

@@ -12,7 +12,7 @@ import xyz.kyngs.aquaticproxy.api.network.NetworkFabric;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
 import xyz.kyngs.aquaticproxy.api.network.session.BackendSessionHandler;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
-import xyz.kyngs.aquaticproxy.network.session.backend.HandshakeSessionHandler;
+import xyz.kyngs.aquaticproxy.network.session.backend.BackendHandshakeSessionHandler;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -34,7 +34,7 @@ public class AquaticBackendConnection extends AquaticConnection<BackendSessionHa
 
     @Override
     protected BackendSessionHandler createInitialSessionHandler() {
-        return new HandshakeSessionHandler(this);
+        return new BackendHandshakeSessionHandler(this);
     }
 
     @Override
