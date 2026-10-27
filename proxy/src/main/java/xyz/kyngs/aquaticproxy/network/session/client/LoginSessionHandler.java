@@ -3,17 +3,17 @@ package xyz.kyngs.aquaticproxy.network.session.client;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.kyngs.aquaticproxy.api.event.EventPriority;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
-import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.ConfigurationDisconnectPacket;
-import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.LoginAcknowledgedPacket;
-import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.LoginDisconnectPacket;
-import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.LoginStartPacket;
-import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.LoginSuccessPacket;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.*;
 import xyz.kyngs.aquaticproxy.api.network.session.ClientSessionHandler;
 import xyz.kyngs.aquaticproxy.api.util.GameProfile;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 import xyz.kyngs.aquaticproxy.network.AquaticClientConnection;
+import xyz.kyngs.aquaticproxy.network.compression.CompressionPostProcessor;
+import xyz.kyngs.aquaticproxy.network.compression.CompressionPreProcessor;
+import xyz.kyngs.aquaticproxy.network.compression.JavaZipCompressor;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,16 +40,26 @@ public class LoginSessionHandler implements ClientSessionHandler {
 
     @Override
     public void activate() {
-
     }
 
     @Override
     public void deactivate() {
+    }
 
+    private void enableCompression(int threshold) {
+        LOGGER.info("Enabling compression for client {} with threshold {}", connection, threshold);
+
+        connection.doWriteLocked(() -> {
+            connection.writePacket(new SetCompressionPacket(threshold));
+            connection.addPreProcessor(EventPriority.EARLY, new CompressionPreProcessor(JavaZipCompressor.DEFAULT));
+            connection.addPostProcessor(EventPriority.LATE, new CompressionPostProcessor(JavaZipCompressor.DEFAULT, threshold));
+        });
     }
 
     @Override
     public PacketHandler.Result handle(LoginStartPacket packet) {
+        enableCompression(256);
+
         profile = new GameProfile(packet.getClaimedUUID(), packet.getUsername(), List.of());
         connection.writePacket(new LoginSuccessPacket(profile, sessionId));
         return PacketHandler.Result.CANCELLED;

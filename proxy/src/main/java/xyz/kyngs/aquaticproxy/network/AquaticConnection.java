@@ -24,6 +24,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolUtil.writeVarInt;
+
 public abstract class AquaticConnection<S extends SessionHandler, PC extends Connection> implements Connection {
     private static final Logger LOGGER = LoggerFactory.getLogger(AquaticConnection.class);
     protected final NetworkFabric.Adapter<?> adapter;
@@ -150,7 +152,7 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
             throw new IllegalStateException("Packet " + packet.getClass().getName() + " is not registered");
         }
         var data = Unpooled.buffer();
-        ProtocolUtil.writeVarInt(data, registration.protocolPacketIdMap().get(protocolVersion.version()));
+        writeVarInt(data, registration.protocolPacketIdMap().get(protocolVersion.version()));
         packet.encode(data, protocolVersion);
         writeFrame(data);
     }

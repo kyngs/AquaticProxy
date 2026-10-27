@@ -55,7 +55,7 @@ public class LoginSessionHandler implements BackendSessionHandler {
 
     @Override
     public PacketHandler.Result handle(SetCompressionPacket packet) {
-        LOGGER.info("Enabling compression for player {} with threshold {}", player, packet.getThreshold());
+        LOGGER.info("Enabling backend compression for player {} with threshold {}", player, packet.getThreshold());
 
         enableCompression(packet.getThreshold());
         return PacketHandler.Result.CANCELLED;

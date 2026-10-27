@@ -11,6 +11,13 @@ public class SetCompressionPacket implements Packet {
 
     private int threshold;
 
+    public SetCompressionPacket(int threshold) {
+        this.threshold = threshold;
+    }
+
+    public SetCompressionPacket() {
+    }
+
     @Override
     public void decode(ByteBuf buf, ProtocolVersion version) {
         this.threshold = readVarInt(buf);
