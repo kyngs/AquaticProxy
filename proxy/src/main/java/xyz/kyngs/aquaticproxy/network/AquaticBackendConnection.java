@@ -10,13 +10,13 @@ import xyz.kyngs.aquaticproxy.api.network.BackendConnection;
 import xyz.kyngs.aquaticproxy.api.network.ClientConnection;
 import xyz.kyngs.aquaticproxy.api.network.NetworkFabric;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
-import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolUtil;
 import xyz.kyngs.aquaticproxy.api.network.session.BackendSessionHandler;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 import xyz.kyngs.aquaticproxy.network.session.backend.HandshakeSessionHandler;
 
-import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+
+import static xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolUtil.readVarInt;
 
 public class AquaticBackendConnection extends AquaticConnection<BackendSessionHandler, ClientConnection> implements BackendConnection {
 
@@ -42,7 +42,7 @@ public class AquaticBackendConnection extends AquaticConnection<BackendSessionHa
         data = preProcess(data);
         var packetHeaderIndex = data.readerIndex();
 
-        var packetId = ProtocolUtil.readVarInt(data);
+        var packetId = readVarInt(data);
         var state = sessionHandler.getProtocolState();
         var cachedVersion = protocolVersion;
 
@@ -83,7 +83,6 @@ public class AquaticBackendConnection extends AquaticConnection<BackendSessionHa
         if (pc == null || pc.getSessionHandler().getProtocolState() != state) return;
         data.readerIndex(packetHeaderIndex);
         if (pc.isConnected()) pc.writeFrame(data);
-        data.release();
     }
 
     @Override

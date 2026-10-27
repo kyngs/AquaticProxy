@@ -138,6 +138,8 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
+        } finally {
+            data.release();
         }
     }
 
@@ -151,7 +153,6 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
         ProtocolUtil.writeVarInt(data, registration.protocolPacketIdMap().get(protocolVersion.version()));
         packet.encode(data, protocolVersion);
         writeFrame(data);
-        data.release();
     }
 
     @Override

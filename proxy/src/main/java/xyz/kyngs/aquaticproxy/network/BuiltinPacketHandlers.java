@@ -23,6 +23,7 @@ public class BuiltinPacketHandlers {
         registry.registerClientboundHandler(owner, EncryptionRequestPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));
         registry.registerClientboundHandler(owner, LoginDisconnectPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));
         registry.registerClientboundHandler(owner, LoginSuccessPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));
+        registry.registerClientboundHandler(owner, SetCompressionPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));
         registry.registerClientboundHandler(owner, FinishConfigurationPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));
         registry.registerClientboundHandler(owner, ConfigurationDisconnectPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));
         registry.registerClientboundHandler(owner, PlayDisconnectPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));

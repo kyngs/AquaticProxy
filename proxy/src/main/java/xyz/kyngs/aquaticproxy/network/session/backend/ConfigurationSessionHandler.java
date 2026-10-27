@@ -35,7 +35,6 @@ public class ConfigurationSessionHandler implements BackendSessionHandler {
         for (ByteBuf frame : connection.getPairedConnection().getQueuedConfigurationFrames()) {
             LOGGER.info("Sending queued configuration frame to backend connection for player {}", player);
             connection.writeFrame(frame);
-            frame.release();
         }
         connection.getPairedConnection().getQueuedConfigurationFrames().clear();
     }

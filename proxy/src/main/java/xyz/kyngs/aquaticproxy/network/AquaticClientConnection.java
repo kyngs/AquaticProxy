@@ -100,7 +100,6 @@ public class AquaticClientConnection extends AquaticConnection<ClientSessionHand
 
         data.readerIndex(packetHeaderIndex);
         if (pc.isConnected()) pc.writeFrame(data);
-        data.release();
     }
 
     @Override

@@ -3,12 +3,16 @@ package xyz.kyngs.aquaticproxy.network.session.backend;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.kyngs.aquaticproxy.api.event.EventPriority;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.*;
 import xyz.kyngs.aquaticproxy.api.network.session.BackendSessionHandler;
 import xyz.kyngs.aquaticproxy.api.player.Player;
 import xyz.kyngs.aquaticproxy.network.AquaticBackendConnection;
+import xyz.kyngs.aquaticproxy.network.compression.CompressionPostProcessor;
+import xyz.kyngs.aquaticproxy.network.compression.CompressionPreProcessor;
+import xyz.kyngs.aquaticproxy.network.compression.JavaZipCompressor;
 
 public class LoginSessionHandler implements BackendSessionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginSessionHandler.class);
@@ -47,6 +51,21 @@ public class LoginSessionHandler implements BackendSessionHandler {
         connection.switchProtocolState(new ConfigurationSessionHandler(connection, player));
 
         return PacketHandler.Result.CANCELLED;
+    }
+
+    @Override
+    public PacketHandler.Result handle(SetCompressionPacket packet) {
+        LOGGER.info("Enabling compression for player {} with threshold {}", player, packet.getThreshold());
+
+        enableCompression(packet.getThreshold());
+        return PacketHandler.Result.CANCELLED;
+    }
+
+    private void enableCompression(int threshold) {
+        connection.doWriteLocked(() -> {
+            connection.addPreProcessor(EventPriority.EARLY, new CompressionPreProcessor(JavaZipCompressor.DEFAULT));
+            connection.addPostProcessor(EventPriority.LATE, new CompressionPostProcessor(JavaZipCompressor.DEFAULT, threshold));
+        });
     }
 
     @Override

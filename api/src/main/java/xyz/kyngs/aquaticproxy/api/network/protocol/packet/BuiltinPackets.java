@@ -4,7 +4,6 @@ import xyz.kyngs.aquaticproxy.api.ResourceOwner;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketDirection;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketRegistry;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
-import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolVersion;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.AcknowledgeFinishConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.ConfigurationDisconnectPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.FinishConfigurationPacket;
@@ -85,6 +84,12 @@ public class BuiltinPackets {
                 .forDirection(PacketDirection.CLIENTBOUND)
                 .forState(ProtocolState.LOGIN)
                 .forId(MINECRAFT_1_7_2, LATEST, 0x00)
+                .register();
+
+        registry.buildPacket(owner, SetCompressionPacket::new)
+                .forDirection(PacketDirection.CLIENTBOUND)
+                .forState(ProtocolState.LOGIN)
+                .forId(MINECRAFT_1_7_2, LATEST, 0x03)
                 .register();
 
         // ==CONFIGURATION==
