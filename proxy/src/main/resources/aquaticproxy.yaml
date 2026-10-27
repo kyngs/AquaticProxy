@@ -1,0 +1,7 @@
+network:
+  # The address to bind the server to
+  bind: "0.0.0.0"
+  # The port to bind the server to
+  port: 25565
+  # The compression threshold for packets sent to clients. Set to -1 to disable compression.
+  compression-threshold: 256

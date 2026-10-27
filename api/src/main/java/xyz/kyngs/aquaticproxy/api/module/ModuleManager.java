@@ -2,6 +2,7 @@ package xyz.kyngs.aquaticproxy.api.module;
 
 import xyz.kyngs.aquaticproxy.api.ResourceOwner;
 import xyz.kyngs.aquaticproxy.api.backend.BackendModule;
+import xyz.kyngs.aquaticproxy.api.configuration.ConfigurationModule;
 import xyz.kyngs.aquaticproxy.api.event.EventModule;
 import xyz.kyngs.aquaticproxy.api.network.NetworkModule;
 import xyz.kyngs.aquaticproxy.api.player.PlayerModule;
@@ -36,5 +37,9 @@ public interface ModuleManager {
 
     default PlayerModule getPlayerModule() {
         return getModule(PlayerModule.KEY);
+    }
+
+    default ConfigurationModule getConfigurationModule() {
+        return getModule(ConfigurationModule.KEY);
     }
 }

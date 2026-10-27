@@ -58,7 +58,7 @@ public class LoginSessionHandler implements ClientSessionHandler {
 
     @Override
     public PacketHandler.Result handle(LoginStartPacket packet) {
-        enableCompression(256);
+        enableCompression(moduleManager.getConfigurationModule().getCompressionThreshold());
 
         profile = new GameProfile(packet.getClaimedUUID(), packet.getUsername(), List.of());
         connection.writePacket(new LoginSuccessPacket(profile, sessionId));

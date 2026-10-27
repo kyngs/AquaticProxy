@@ -121,13 +121,13 @@ public class SocketNetworkFabric implements NetworkFabric {
     }
 
     @Override
-    public void bind(String bindAddress, int port) throws BindException {
+    public void bind(InetSocketAddress address) throws BindException {
         if (!started.compareAndSet(false, true)) {
             throw new IllegalStateException("Server has already been attempted to start");
         }
 
         try {
-            socket.bind(new InetSocketAddress(bindAddress, port));
+            socket.bind(address);
         } catch (BindException e) {
             throw e;
         } catch (IOException e) {

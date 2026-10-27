@@ -10,7 +10,7 @@ import java.net.InetSocketAddress;
 
 public interface NetworkFabric {
 
-    void bind(String bindAddress, int port) throws BindException;
+    void bind(InetSocketAddress address) throws BindException;
 
     void close();
 

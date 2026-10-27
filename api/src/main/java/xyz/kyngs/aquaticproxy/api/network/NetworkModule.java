@@ -8,6 +8,7 @@ import xyz.kyngs.aquaticproxy.api.module.ModuleKey;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketRegistry;
 
 import java.net.BindException;
+import java.net.InetSocketAddress;
 
 public interface NetworkModule extends Module {
 
@@ -21,5 +22,5 @@ public interface NetworkModule extends Module {
 
     PacketRegistry<?, ?> getPacketHandlerRegistry();
 
-    void bind(String host, int port) throws BindException;
+    void bind(InetSocketAddress address) throws BindException;
 }

@@ -15,6 +15,7 @@ import xyz.kyngs.aquaticproxy.network.fabric.SocketNetworkFabric;
 
 import java.io.IOException;
 import java.net.BindException;
+import java.net.InetSocketAddress;
 
 public class AquaticNetworkModule implements NetworkModule {
 
@@ -59,9 +60,9 @@ public class AquaticNetworkModule implements NetworkModule {
     }
 
     @Override
-    public void bind(String host, int port) throws BindException {
-        LOGGER.info("Binding network module to {}:{}", host, port);
-        network.bind(host, port);
+    public void bind(InetSocketAddress address) throws BindException {
+        LOGGER.info("Binding network module to {}:{}", address.getHostString(), address.getPort());
+        network.bind(address);
     }
 
     @Override
