@@ -39,6 +39,7 @@ public class AquaticBackendConnection extends AquaticConnection<BackendSessionHa
 
     @Override
     public void handleFrame(ByteBuf data) {
+        data = preProcess(data);
         var packetHeaderIndex = data.readerIndex();
 
         var packetId = ProtocolUtil.readVarInt(data);

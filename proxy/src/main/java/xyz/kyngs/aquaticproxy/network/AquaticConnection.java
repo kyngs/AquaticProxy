@@ -6,8 +6,11 @@ import net.kyori.adventure.text.Component;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.kyngs.aquaticproxy.api.event.EventPriority;
 import xyz.kyngs.aquaticproxy.api.network.Connection;
 import xyz.kyngs.aquaticproxy.api.network.NetworkFabric;
+import xyz.kyngs.aquaticproxy.api.network.PostProcessor;
+import xyz.kyngs.aquaticproxy.api.network.PreProcessor;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolUtil;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolVersion;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.Packet;
@@ -15,6 +18,9 @@ import xyz.kyngs.aquaticproxy.api.network.session.SessionHandler;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
 
 import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -25,9 +31,13 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
     protected final AquaticModuleManager moduleManager;
     protected final ReentrantReadWriteLock connectionLock;
     protected ProtocolVersion protocolVersion;
+    protected volatile List<PreProcessor> preProcessors;
+    protected volatile List<PostProcessor> postProcessors;
     protected volatile S sessionHandler;
     protected volatile PC pairedConnection;
     protected volatile boolean connected;
+    private final Map<EventPriority, List<PreProcessor>> registeredPreProcessors;
+    private final Map<EventPriority, List<PostProcessor>> registeredPostProcessors;
 
     protected AquaticConnection(NetworkFabric.Adapter<?> adapter, AquaticNetworkModule networkModule, AquaticModuleManager moduleManager) {
         this.adapter = adapter;
@@ -37,6 +47,45 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
         this.protocolVersion = ProtocolVersion.UNKNOWN;
         this.connectionLock = new ReentrantReadWriteLock();
         this.connected = true;
+        this.preProcessors = new ArrayList<>();
+        this.postProcessors = new ArrayList<>();
+        this.registeredPreProcessors = new ConcurrentHashMap<>();
+        this.registeredPostProcessors = new ConcurrentHashMap<>();
+    }
+
+    @Override
+    public void addPostProcessor(EventPriority priority, PostProcessor postProcessor) {
+        registeredPostProcessors.computeIfAbsent(priority, _ -> new CopyOnWriteArrayList<>()).add(postProcessor);
+        postProcessors = getProcessors(registeredPostProcessors);
+    }
+
+    @Override
+    public void addPreProcessor(EventPriority priority, PreProcessor preProcessor) {
+        registeredPreProcessors.computeIfAbsent(priority, _ -> new CopyOnWriteArrayList<>()).add(preProcessor);
+        preProcessors = getProcessors(registeredPreProcessors);
+    }
+
+    private <P> List<P> getProcessors(Map<EventPriority, List<P>> map) {
+        var sortedCopy = new TreeMap<>(map);
+        var result = new ArrayList<P>();
+        for (List<P> processors : sortedCopy.values()) {
+            result.addAll(processors);
+        }
+        return result;
+    }
+
+    protected ByteBuf preProcess(ByteBuf data) {
+        for (var preProcessor : preProcessors) {
+            data = preProcessor.transform(data);
+        }
+        return data;
+    }
+
+    protected ByteBuf postProcess(ByteBuf data) {
+        for (var postProcessor : postProcessors) {
+            data = postProcessor.transform(data);
+        }
+        return data;
     }
 
     public NetworkFabric.Adapter<?> getAdapter() {
@@ -80,6 +129,7 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
 
     @Override
     public void writeFrame(ByteBuf data) {
+        data = postProcess(data);
         try {
             adapter.writeFrame(data);
         } catch (IOException e) {

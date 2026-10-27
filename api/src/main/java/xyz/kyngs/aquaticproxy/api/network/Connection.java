@@ -3,12 +3,14 @@ package xyz.kyngs.aquaticproxy.api.network;
 import io.netty.buffer.ByteBuf;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.Nullable;
+import xyz.kyngs.aquaticproxy.api.event.EventPriority;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolVersion;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.Packet;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.function.Function;
 
 public interface Connection {
 
@@ -33,6 +35,10 @@ public interface Connection {
     ReadWriteLock getConnectionLock();
 
     @Nullable Connection getPairedConnection();
+
+    void addPreProcessor(EventPriority priority, PreProcessor preProcessor);
+
+    void addPostProcessor(EventPriority priority, PostProcessor postProcessor);
 
     default <T> T doLocked(Lock lock, Callable<T> callable) {
         lock.lock();
