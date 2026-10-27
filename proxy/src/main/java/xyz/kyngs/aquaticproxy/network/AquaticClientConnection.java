@@ -98,7 +98,7 @@ public class AquaticClientConnection extends AquaticConnection<ClientSessionHand
         }
 
         data.readerIndex(packetHeaderIndex);
-        pc.writeFrame(data);
+        if (pc.isConnected()) pc.writeFrame(data);
         data.release();
     }
 
@@ -123,10 +123,21 @@ public class AquaticClientConnection extends AquaticConnection<ClientSessionHand
 
     @Override
     public void disconnect(Component reason) {
-        sessionHandler.sendDisconnectReason(reason);
+        getConnectionLock().writeLock().lock();
         try {
-            adapter.close();
-        } catch (IOException _) {
+            if (!isConnected()) return;
+            connected = false;
+            try {
+                sessionHandler.sendDisconnectReason(reason);
+                adapter.close();
+            } catch (Exception _) {
+            }
+            if (pairedConnection != null) {
+                pairedConnection.disconnect(reason);
+            }
+            if (getPlayer() != null) getPlayer().finalizeDisconnection();
+        } finally {
+            getConnectionLock().writeLock().unlock();
         }
     }
 
@@ -136,9 +147,8 @@ public class AquaticClientConnection extends AquaticConnection<ClientSessionHand
         eventModule.fire(event);
 
         switch (event.getResult()) {
-            case KickedFromServerEvent.Kick kick -> disconnect(kick.reason());
+            case KickedFromServerEvent.Kick kick -> player.disconnect(kick.reason());
             case KickedFromServerEvent.Redirect redirect -> player.connectToBackend(redirect.server());
-            case KickedFromServerEvent.None none -> {}
         }
     }
 

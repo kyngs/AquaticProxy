@@ -2,9 +2,11 @@ package xyz.kyngs.aquaticproxy.network;
 
 import xyz.kyngs.aquaticproxy.api.ResourceOwner;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.AcknowledgeFinishConfigurationPacket;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.ConfigurationDisconnectPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.FinishConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.handshake.HandshakePacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.*;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.play.PlayDisconnectPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.status.StatusPingRequestPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.status.StatusRequestPacket;
 import xyz.kyngs.aquaticproxy.network.protocol.AquaticPacketRegistry;
@@ -22,5 +24,7 @@ public class BuiltinPacketHandlers {
         registry.registerClientboundHandler(owner, LoginDisconnectPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));
         registry.registerClientboundHandler(owner, LoginSuccessPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));
         registry.registerClientboundHandler(owner, FinishConfigurationPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));
+        registry.registerClientboundHandler(owner, ConfigurationDisconnectPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));
+        registry.registerClientboundHandler(owner, PlayDisconnectPacket.class, (packet, connection) -> connection.getSessionHandler().handle(packet));
     }
 }

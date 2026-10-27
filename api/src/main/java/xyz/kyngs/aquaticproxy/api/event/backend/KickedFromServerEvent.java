@@ -40,27 +40,12 @@ public class KickedFromServerEvent extends AbstractPlayerResultedEvent<KickedFro
         setResult(new Redirect(server));
     }
 
-    public void none() {
-        setResult(new None());
-    }
-
-    @Override
-    public void setResult(Result result) {
-        if (connected && result instanceof None) {
-            throw new IllegalArgumentException("Cannot set result to None if the player is not connected to a server.");
-        }
-        super.setResult(result);
-    }
-
-    public sealed interface Result permits Kick, Redirect, None {
+    public sealed interface Result permits Kick, Redirect {
     }
 
     public record Kick(Component reason) implements Result {
     }
 
     public record Redirect(BackendServer server) implements Result {
-    }
-
-    public record None() implements Result {
     }
 }

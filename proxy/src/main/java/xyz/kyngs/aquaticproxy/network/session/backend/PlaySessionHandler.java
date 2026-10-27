@@ -3,6 +3,7 @@ package xyz.kyngs.aquaticproxy.network.session.backend;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.FinishConfigurationPacket;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.play.PlayDisconnectPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.play.StartConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.session.BackendSessionHandler;
 import xyz.kyngs.aquaticproxy.api.player.Player;
@@ -42,6 +43,12 @@ public class PlaySessionHandler implements BackendSessionHandler {
     @Override
     public PacketHandler.Result handle(StartConfigurationPacket packet) {
         switchToConfiguration();
+        return PacketHandler.Result.CANCELLED;
+    }
+
+    @Override
+    public PacketHandler.Result handle(PlayDisconnectPacket packet) {
+        connection.disconnect(packet.getReason());
         return PacketHandler.Result.CANCELLED;
     }
 }

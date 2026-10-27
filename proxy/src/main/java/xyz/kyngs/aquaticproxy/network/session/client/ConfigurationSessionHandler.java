@@ -3,6 +3,7 @@ package xyz.kyngs.aquaticproxy.network.session.client;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.kyngs.aquaticproxy.api.backend.BackendConnectionException;
 import xyz.kyngs.aquaticproxy.api.event.EventModule;
 import xyz.kyngs.aquaticproxy.api.event.backend.ChooseInitialServerEvent;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
@@ -53,21 +54,34 @@ public class ConfigurationSessionHandler implements ClientSessionHandler {
 
         var defaultServer = moduleManager.getBackendModule().getBackendServers().stream().findFirst().orElse(null);
 
-        var initialServerEvent = new ChooseInitialServerEvent(player, defaultServer);
-        eventModule.fire(initialServerEvent);
+        BackendConnectionException lastException = null;
 
-        if (!connection.isConnected()) return;
+        for (int i = 0; i < 3; i++) {
+            var initialServerEvent = new ChooseInitialServerEvent(player, defaultServer, lastException);
+            eventModule.fire(initialServerEvent);
 
-        var server = initialServerEvent.getServer();
-        if (server == null) {
-            LOGGER.warn("No initial server chosen for player {}, disconnecting", player);
-            connection.disconnect(Component.text("There is no server available to connect to."));
-            return;
+            if (!connection.isConnected()) return;
+
+            var server = initialServerEvent.getServer();
+            if (server == null) {
+                LOGGER.warn("No initial server chosen for player {}, disconnecting", player);
+                player.disconnect(Component.text("There is no server available to connect to."));
+                return;
+            }
+
+            LOGGER.info("Connecting player {} to initial server {}", player, server);
+
+            try {
+                player.connectToBackend(server);
+                return;
+            } catch (BackendConnectionException e) {
+                LOGGER.error("Failed to connect player {} to initial server {}, attempt {}/3", player, server, i + 1, e);
+                lastException = e;
+            }
         }
 
-        LOGGER.info("Connecting player {} to initial server {}", player, server);
-
-        player.connectToBackend(server);
+        LOGGER.error("Failed to connect player {} to initial server after 3 attempts, disconnecting", player);
+        player.disconnect(lastException.getOrGenerateReason());
     }
 
     @Override

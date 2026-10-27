@@ -3,6 +3,7 @@ package xyz.kyngs.aquaticproxy.api.player;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.Nullable;
+import xyz.kyngs.aquaticproxy.api.backend.BackendConnectionException;
 import xyz.kyngs.aquaticproxy.api.backend.BackendServer;
 import xyz.kyngs.aquaticproxy.api.network.BackendConnection;
 import xyz.kyngs.aquaticproxy.api.network.ClientConnection;
@@ -23,7 +24,8 @@ public interface Player extends Audience {
 
     ClientConnection getConnection();
 
-    BackendConnectionResult connectToBackend(BackendServer server);
+    // successful connect = reached at least configuration phase
+    BackendConnection connectToBackend(BackendServer server) throws BackendConnectionException;
 
     default BackendConnection getBackendConnection() {
         return getConnection().getPairedConnection();
@@ -36,6 +38,11 @@ public interface Player extends Audience {
         return getBackendConnection().getServer();
     }
 
-    record BackendConnectionResult(BackendConnection connection, boolean success, @Nullable Component reason) {}
+    default void disconnect() {
+        disconnect(Component.empty());
+    }
 
+    void disconnect(Component reason);
+
+    void finalizeDisconnection();
 }

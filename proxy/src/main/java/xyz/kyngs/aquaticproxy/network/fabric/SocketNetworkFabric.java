@@ -117,6 +117,7 @@ public class SocketNetworkFabric implements NetworkFabric {
                 break;
             }
         }
+        LOGGER.info("Client {} disconnected", client.getRemoteSocketAddress());
     }
 
     @Override
@@ -178,7 +179,7 @@ public class SocketNetworkFabric implements NetworkFabric {
             try {
                 var packet = readPacket(backend.getInputStream());
                 connection.handleFrame(packet);
-            } catch (EOFException | SocketException e) {
+            } catch (EOFException e) {
                 connection.disconnect(Component.text("Socket closed"));
                 break;
             } catch (IOException | RuntimeException e) {

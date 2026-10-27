@@ -2,6 +2,7 @@ package xyz.kyngs.aquaticproxy.network;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import net.kyori.adventure.text.Component;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
     protected ProtocolVersion protocolVersion;
     protected volatile S sessionHandler;
     protected volatile PC pairedConnection;
+    protected volatile boolean connected;
 
     protected AquaticConnection(NetworkFabric.Adapter<?> adapter, AquaticNetworkModule networkModule, AquaticModuleManager moduleManager) {
         this.adapter = adapter;
@@ -34,6 +36,7 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
         this.sessionHandler = createInitialSessionHandler(); // Cannot pass in the constructor because it would not allow the subclass to pass itself to the session handler, which is needed for the session handler to be able to call back into the connection.
         this.protocolVersion = ProtocolVersion.UNKNOWN;
         this.connectionLock = new ReentrantReadWriteLock();
+        this.connected = true;
     }
 
     public NetworkFabric.Adapter<?> getAdapter() {
@@ -52,7 +55,7 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
 
     @Override
     public boolean isConnected() {
-        return adapter.isConnected();
+        return connected;
     }
 
     @Override
@@ -80,7 +83,11 @@ public abstract class AquaticConnection<S extends SessionHandler, PC extends Con
         try {
             adapter.writeFrame(data);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            if (isConnected()) try {
+                adapter.close();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 

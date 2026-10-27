@@ -11,6 +11,7 @@ import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.FinishCo
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.handshake.HandshakePacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.login.*;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.play.AcknowledgeConfigurationPacket;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.play.PlayDisconnectPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.play.StartConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.status.StatusPingRequestPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.status.StatusPongResponsePacket;
@@ -112,6 +113,12 @@ public class BuiltinPackets {
                 .forDirection(PacketDirection.CLIENTBOUND)
                 .forState(ProtocolState.PLAY)
                 .forId(MINECRAFT_1_20_2, LATEST, 0x78)
+                .register();
+
+        registry.buildPacket(owner, PlayDisconnectPacket::new)
+                .forDirection(PacketDirection.CLIENTBOUND)
+                .forState(ProtocolState.PLAY)
+                .forId(MINECRAFT_1_7_2, LATEST, 0x20)
                 .register();
 
         registry.buildPacket(owner, () -> AcknowledgeConfigurationPacket.INSTANCE)

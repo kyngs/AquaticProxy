@@ -1,13 +1,12 @@
 package xyz.kyngs.aquaticproxy.network.session.backend;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.kyngs.aquaticproxy.api.network.BackendConnection;
 import xyz.kyngs.aquaticproxy.api.network.protocol.PacketHandler;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
-import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.AcknowledgeFinishConfigurationPacket;
+import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.ConfigurationDisconnectPacket;
 import xyz.kyngs.aquaticproxy.api.network.protocol.packet.configuration.FinishConfigurationPacket;
 import xyz.kyngs.aquaticproxy.api.network.session.BackendSessionHandler;
 import xyz.kyngs.aquaticproxy.api.player.Player;
@@ -31,7 +30,7 @@ public class ConfigurationSessionHandler implements BackendSessionHandler {
 
     @Override
     public void activate() {
-        connection.getLoginFuture().complete(new BackendConnection.LoginResult(true, null));
+        connection.getConnectionFuture().complete(new BackendConnection.ConnectionResult(true, null));
 
         for (ByteBuf frame : connection.getPairedConnection().getQueuedConfigurationFrames()) {
             LOGGER.info("Sending queued configuration frame to backend connection for player {}", player);
@@ -49,6 +48,12 @@ public class ConfigurationSessionHandler implements BackendSessionHandler {
     @Override
     public PacketHandler.Result handle(FinishConfigurationPacket packet) {
         switchToPlay();
+        return PacketHandler.Result.CANCELLED;
+    }
+
+    @Override
+    public PacketHandler.Result handle(ConfigurationDisconnectPacket packet) {
+        connection.disconnect(packet.getReason());
         return PacketHandler.Result.CANCELLED;
     }
 

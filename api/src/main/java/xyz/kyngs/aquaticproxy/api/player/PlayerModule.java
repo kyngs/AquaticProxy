@@ -11,4 +11,6 @@ public interface PlayerModule extends Module {
     ModuleKey<PlayerModule> KEY = new ModuleKey<>(Key.key("aquaticproxy", "player"), PlayerModule.class);
 
     Player registerPlayer(GameProfile profile, ClientConnection connection);
+
+    void unregisterPlayer(Player player);
 }

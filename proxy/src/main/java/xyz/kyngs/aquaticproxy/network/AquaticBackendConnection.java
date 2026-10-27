@@ -9,6 +9,7 @@ import xyz.kyngs.aquaticproxy.api.backend.BackendServer;
 import xyz.kyngs.aquaticproxy.api.network.BackendConnection;
 import xyz.kyngs.aquaticproxy.api.network.ClientConnection;
 import xyz.kyngs.aquaticproxy.api.network.NetworkFabric;
+import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolState;
 import xyz.kyngs.aquaticproxy.api.network.protocol.ProtocolUtil;
 import xyz.kyngs.aquaticproxy.api.network.session.BackendSessionHandler;
 import xyz.kyngs.aquaticproxy.module.AquaticModuleManager;
@@ -16,13 +17,12 @@ import xyz.kyngs.aquaticproxy.network.session.backend.HandshakeSessionHandler;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 public class AquaticBackendConnection extends AquaticConnection<BackendSessionHandler, ClientConnection> implements BackendConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AquaticBackendConnection.class);
     private final BackendServer server;
-    private final CompletableFuture<LoginResult> loginFuture;
+    private final CompletableFuture<ConnectionResult> loginFuture;
 
     public AquaticBackendConnection(NetworkFabric.BackendAdapter<?> adapter, @Nullable ClientConnection clientConnection, AquaticNetworkModule networkManager, AquaticModuleManager moduleManager) {
         super(adapter, networkManager, moduleManager);
@@ -81,22 +81,28 @@ public class AquaticBackendConnection extends AquaticConnection<BackendSessionHa
 
         if (pc == null || pc.getSessionHandler().getProtocolState() != state) return;
         data.readerIndex(packetHeaderIndex);
-        pc.writeFrame(data);
+        if (pc.isConnected()) pc.writeFrame(data);
         data.release();
     }
 
     @Override
     public void disconnect(Component reason) {
-        doWriteLocked(() -> {
+        getConnectionLock().writeLock().lock();
+        try {
+            if (!isConnected()) return;
+            connected = false;
             try {
                 adapter.close();
-            } catch (IOException _) {
+            } catch (Exception _) {
             }
-        });
 
-        var pc = pairedConnection;
-        if (pc == null) return;
-        pc.handleServerKick(reason, this);
+            var pc = pairedConnection;
+            if (pc == null || !getSessionHandler().getProtocolState().isAtLeast(ProtocolState.CONFIGURATION)) return;
+
+            pc.handleServerKick(reason, this);
+        } finally {
+            getConnectionLock().writeLock().unlock();
+        }
     }
 
     @Override
@@ -105,7 +111,7 @@ public class AquaticBackendConnection extends AquaticConnection<BackendSessionHa
     }
 
     @Override
-    public CompletableFuture<LoginResult> getLoginFuture() {
+    public CompletableFuture<ConnectionResult> getConnectionFuture() {
         return loginFuture;
     }
 }
